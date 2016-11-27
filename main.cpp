@@ -99,6 +99,7 @@ int main() {
     string terminateur;
 
     int nombre_bits_requis = (versions[version-1] + 2) * 8;
+    cout << "Nombre de bits requis : " << nombre_bits_requis << endl;
 
     if (nombre_bits_requis - chaine.size() <= 4) {
         for (int i = chaine.size(); i = nombre_bits_requis; i++) {
@@ -121,17 +122,22 @@ int main() {
     cout << "Ajout de 0 n" << "\x82" << "cessaires pour obtenir une chaine de longueur multiple de 8 : " << c << endl;
 
     string octets_pad;
+    int ajout_octets_pad = 0;
     if (nombre_bits_requis - chaine.size() > 0) {
-        for (int i = 1; i = (nombre_bits_requis - chaine.size()) / 8; i++) {
-            octets_pad += "1110110000010001"; //11101100 00010001 sont des octets "Pad"
+        ajout_octets_pad = (nombre_bits_requis - chaine.size()) / 8;
+        for (int i = 0; i < ajout_octets_pad; i++) {
+            if(i%2==0)
+                octets_pad += "111011000"; //11101100 et 00010001 sont les octets "Pad"
+            else
+                octets_pad += "00010001";
         }
     }
 
-    cout << "Octets 'Pad' " << "\x85" << "ajouter pour arriver au nombre de bits requis : " << (nombre_bits_requis - chaine.size()) / 8 << endl;
+    cout << "Octets 'Pad' " << "\x85" << " ajouter pour arriver au nombre de bits requis : " << ajout_octets_pad << endl;
 
     chaine += octets_pad;
 
-    cout << "\nChaine avant codage de la correction des erreurs : " << chaine << "(nombre de bits : " << chaine.size() << ")" << endl;
+    cout << "Chaine finale : " << chaine << " (nombre de bits : " << chaine.size() << ")" << endl;
 
     system("PAUSE");
 
