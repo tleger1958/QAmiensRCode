@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <bitset>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
 
 using namespace std;
 
@@ -79,14 +82,56 @@ int main() {
     else
         indicateur_de_nombre_de_caracteres = std::bitset<16>(nombre_caracteres_entree).to_string();
 
-    cout  << "Mode de codage : mode byte" << "\nNombre de caract\x8Ares : " << nombre_caracteres_entree << "\nNiveau de correction d'erreurs : " << niveau_correction_erreur << "\nVersion : " << version << "\nIndicateur de mode : " << indicateur_de_mode << "\nIndicateur de nombre de caract\x8Ares : " << indicateur_de_nombre_de_caracteres << endl;
+    cout << "Mode de codage : mode byte" << "\nNombre de caract\x8Ares : " << nombre_caracteres_entree
+         << "\nNiveau de correction d'erreurs : " << niveau_correction_erreur << "\nVersion : " << version
+         << "\nIndicateur de mode : " << indicateur_de_mode << "\nIndicateur de nombre de caract\x8Ares : "
+         << indicateur_de_nombre_de_caracteres << endl;
 
     string donnees_encodees;
-    for(char& caractere : entree) {
+    for (char &caractere : entree) {
         donnees_encodees += std::bitset<8>(caractere).to_string();
     }
 
     cout << "Donn" << "\x82" << "es encod" << "\x82" << "es : " << donnees_encodees << endl;
+
+    string chaine = donnees_encodees + indicateur_de_nombre_de_caracteres + indicateur_de_mode;
+
+    string terminateur;
+
+    int nombre_bits_requis = (versions[version-1] + 2) * 8;
+
+    if (nombre_bits_requis - chaine.size() <= 4) {
+        for (int i = chaine.size(); i = nombre_bits_requis; i++) {
+            terminateur += "0";
+        }
+    } else {
+        terminateur = "0000";
+    }
+
+    cout << "Terminateur : " << terminateur << endl;
+
+    chaine += terminateur;
+
+    int c = 0;
+    while (chaine.size() % 8 != 0) {
+        chaine += "0";
+        c++;
+    }
+
+    cout << "Ajout de 0 n" << "\x82" << "cessaires pour obtenir une chaine de longueur multiple de 8 : " << c << endl;
+
+    string octets_pad;
+    if (nombre_bits_requis - chaine.size() > 0) {
+        for (int i = 1; i = (nombre_bits_requis - chaine.size()) / 8; i++) {
+            octets_pad += "1110110000010001"; //11101100 00010001 sont des octets "Pad"
+        }
+    }
+
+    cout << "Octets 'Pad' " << "\x85" << "ajouter pour arriver au nombre de bits requis : " << (nombre_bits_requis - chaine.size()) / 8 << endl;
+
+    chaine += octets_pad;
+
+    cout << "\nChaine avant codage de la correction des erreurs : " << chaine << "(nombre de bits : " << chaine.size() << ")" << endl;
 
     system("PAUSE");
 
