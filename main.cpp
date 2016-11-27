@@ -11,7 +11,7 @@ int main() {
 
     string entree;
     cout << "Entr" << "\x82" << "e \x85" << " encoder en QrCode : ";
-    cin >> entree;
+    getline(cin, entree);
 
     char niveau_correction_erreur = 'H';
 
@@ -71,7 +71,7 @@ int main() {
         j++;
     }
 
-    int indicateur_de_mode = 0b0100;
+    string indicateur_de_mode = "0100";
 
     string indicateur_de_nombre_de_caracteres;
     if (version <= 9)
@@ -79,7 +79,15 @@ int main() {
     else
         indicateur_de_nombre_de_caracteres = std::bitset<16>(nombre_caracteres_entree).to_string();
 
-    cout << "Version : " << version << "\nIndicateur de nombre de caractères : " << indicateur_de_nombre_de_caracteres << endl;
+    cout  << "Mode de codage : mode byte" << "\nNombre de caract\x8Ares : " << nombre_caracteres_entree << "\nNiveau de correction d'erreurs : " << niveau_correction_erreur << "\nVersion : " << version << "\nIndicateur de mode : " << indicateur_de_mode << "\nIndicateur de nombre de caract\x8Ares : " << indicateur_de_nombre_de_caracteres << endl;
+
+    string donnees_encodees;
+    for(char& caractere : entree) {
+        donnees_encodees += std::bitset<8>(caractere).to_string();
+    }
+
+    cout << "Donn" << "\x82" << "es encod" << "\x82" << "es : " << donnees_encodees << endl;
+
     system("PAUSE");
 
     return 0;
