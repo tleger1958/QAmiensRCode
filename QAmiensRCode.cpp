@@ -1,27 +1,3 @@
-/* 
- * QR Code generator library (C++)
- * 
- * Copyright (c) 2016 Project Nayuki
- * https://www.nayuki.io/page/qr-code-generator-library
- * 
- * (MIT License)
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- * - The above copyright notice and this permission notice shall be included in
- *   all copies or substantial portions of the Software.
- * - The Software is provided "as is", without warranty of any kind, express or
- *   implied, including but not limited to the warranties of merchantability,
- *   fitness for a particular purpose and noninfringement. In no event shall the
- *   authors or copyright holders be liable for any claim, damages or other
- *   liability, whether in an action of contract, tort or otherwise, arising from,
- *   out of or in connection with the Software or the use or other dealings in the
- *   Software.
- */
-
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -86,19 +62,19 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
 		const QrSegment &seg(segs.at(i));
-		bitTampon.appendBits(seg.mode.modeBits, 4);
-		bitTampon.appendBits(seg.numChars, seg.mode.numCharCountBits(version));
-		bitTampon.appendData(seg);
+		bitTampon.ajouterBits(seg.mode.modeBits, 4);
+		bitTampon.ajouterBits(seg.numChars, seg.mode.numCharCountBits(version));
+		bitTampon.ajouterDonnees(seg);
 	}
 	
 	// Add terminator and pad up to a byte if applicable
-	bitTampon.appendBits(0, std::min(4, dataCapacityBits - bitTampon.getBitLength()));
-	bitTampon.appendBits(0, (8 - bitTampon.getBitLength() % 8) % 8);
+	bitTampon.ajouterBits(0, std::min(4, dataCapacityBits - bitTampon.obtenirLongueurBit()));
+	bitTampon.ajouterBits(0, (8 - bitTampon.obtenirLongueurBit() % 8) % 8);
 	
 	// Pad with alternate bytes until data capacity is reached
-	for (uint8_t padByte = 0xEC; bitTampon.getBitLength() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
-		bitTampon.appendBits(padByte, 8);
-	if (bitTampon.getBitLength() % 8 != 0)
+	for (uint8_t padByte = 0xEC; bitTampon.obtenirLongueurBit() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
+		bitTampon.ajouterBits(padByte, 8);
+	if (bitTampon.obtenirLongueurBit() % 8 != 0)
 		throw "Assertion error";
 	
 	// Create the QR Code symbol
