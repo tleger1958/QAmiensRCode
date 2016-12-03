@@ -83,26 +83,26 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 	
 	// Create the data bit string by concatenating all segments
 	int dataCapacityBits = getNumDataCodewords(version, *newEcl) * 8;
-	BitTampon bb;
+	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
 		const QrSegment &seg(segs.at(i));
-		bb.appendBits(seg.mode.modeBits, 4);
-		bb.appendBits(seg.numChars, seg.mode.numCharCountBits(version));
-		bb.appendData(seg);
+		bitTampon.appendBits(seg.mode.modeBits, 4);
+		bitTampon.appendBits(seg.numChars, seg.mode.numCharCountBits(version));
+		bitTampon.appendData(seg);
 	}
 	
 	// Add terminator and pad up to a byte if applicable
-	bb.appendBits(0, std::min(4, dataCapacityBits - bb.getBitLength()));
-	bb.appendBits(0, (8 - bb.getBitLength() % 8) % 8);
+	bitTampon.appendBits(0, std::min(4, dataCapacityBits - bitTampon.getBitLength()));
+	bitTampon.appendBits(0, (8 - bitTampon.getBitLength() % 8) % 8);
 	
 	// Pad with alternate bytes until data capacity is reached
-	for (uint8_t padByte = 0xEC; bb.getBitLength() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
-		bb.appendBits(padByte, 8);
-	if (bb.getBitLength() % 8 != 0)
+	for (uint8_t padByte = 0xEC; bitTampon.getBitLength() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
+		bitTampon.appendBits(padByte, 8);
+	if (bitTampon.getBitLength() % 8 != 0)
 		throw "Assertion error";
 	
 	// Create the QR Code symbol
-	return QAmiensRCode(version, *newEcl, bb.getBytes(), mask);
+	return QAmiensRCode(version, *newEcl, bitTampon.getBytes(), mask);
 }
 
 

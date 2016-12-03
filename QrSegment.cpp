@@ -32,7 +32,7 @@ QAmiensRCodeGeneration::QrSegment QAmiensRCodeGeneration::QrSegment::makeBytes(c
 
 
 QAmiensRCodeGeneration::QrSegment QAmiensRCodeGeneration::QrSegment::makeNumeric(const char *digits) {
-	BitTampon bb;
+	BitTampon bitTampon;
 	int accumData = 0;
 	int accumCount = 0;
 	int charCount = 0;
@@ -43,19 +43,19 @@ QAmiensRCodeGeneration::QrSegment QAmiensRCodeGeneration::QrSegment::makeNumeric
 		accumData = accumData * 10 + (c - '0');
 		accumCount++;
 		if (accumCount == 3) {
-			bb.appendBits(accumData, 10);
+			bitTampon.ajouterBits(accumData, 10);
 			accumData = 0;
 			accumCount = 0;
 		}
 	}
 	if (accumCount > 0)  // 1 or 2 digits remaining
-		bb.appendBits(accumData, accumCount * 3 + 1);
-	return QrSegment(Mode::NUMERIC, charCount, bb.getBytes(), bb.getBitLength());
+		bitTampon.ajouterBits(accumData, accumCount * 3 + 1);
+	return QrSegment(Mode::NUMERIC, charCount, bitTampon.getBytes(), bitTampon.obtenirLongueurBit());
 }
 
 
 QAmiensRCodeGeneration::QrSegment QAmiensRCodeGeneration::QrSegment::makeAlphanumeric(const char *text) {
-	BitTampon bb;
+	BitTampon bitTampon;
 	int accumData = 0;
 	int accumCount = 0;
 	int charCount = 0;
@@ -66,14 +66,14 @@ QAmiensRCodeGeneration::QrSegment QAmiensRCodeGeneration::QrSegment::makeAlphanu
 		accumData = accumData * 45 + ALPHANUMERIC_ENCODING_TABLE[c - ' '];
 		accumCount++;
 		if (accumCount == 2) {
-			bb.appendBits(accumData, 11);
+			bitTampon.ajouterBits(accumData, 11);
 			accumData = 0;
 			accumCount = 0;
 		}
 	}
 	if (accumCount > 0)  // 1 character remaining
-		bb.appendBits(accumData, 6);
-	return QrSegment(Mode::ALPHANUMERIC, charCount, bb.getBytes(), bb.getBitLength());
+		bitTampon.ajouterBits(accumData, 6);
+	return QrSegment(Mode::ALPHANUMERIC, charCount, bitTampon.getBytes(), bitTampon.obtenirLongueurBit());
 }
 
 
