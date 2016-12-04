@@ -3,26 +3,26 @@
 #include "QrSegment.hpp"
 
 
-QAmiensRCodeGeneration::QrSegment::Mode::Mode(int mode, int cc0, int cc1, int cc2) :
+QAmiensRCodeGeneration::QrSegment::Mode::Mode(int mode, int indicNbCar0, int indicNbCar1, int indicNbCar2) :
 		modeBits(mode) {
-	numBitsCharCount[0] = cc0;
-	numBitsCharCount[1] = cc1;
-	numBitsCharCount[2] = cc2;
+	indicNbCar[0] = indicNbCar0;
+	indicNbCar[1] = indicNbCar1;
+	indicNbCar[2] = indicNbCar2;
 }
 
 
 int QAmiensRCodeGeneration::QrSegment::Mode::numCharCountBits(int ver) const {
-	if      ( 1 <= ver && ver <=  9)  return numBitsCharCount[0];
-	else if (10 <= ver && ver <= 26)  return numBitsCharCount[1];
-	else if (27 <= ver && ver <= 40)  return numBitsCharCount[2];
-	else  throw "Version number out of range";
+	if      ( 1 <= ver && ver <=  9)  return indicNbCar[0];
+	else if (10 <= ver && ver <= 26)  return indicNbCar[1];
+	else if (27 <= ver && ver <= 40)  return indicNbCar[2];
+	else  throw "Wesh c'est beaucoup trop grand";
 }
 
 
-const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::NUMERIC     (0x1, 10, 12, 14);
-const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::ALPHANUMERIC(0x2,  9, 11, 13);
-const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::BYTE        (0x4,  8, 16, 16);
-const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::KANJI       (0x8,  8, 10, 12);
+const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::NUMERIQUE        (0x1, 10, 12, 14);
+const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::ALPHANUMERIQUE   (0x2,  9, 11, 13);
+const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::OCTET            (0x4,  8, 16, 16);
+const QAmiensRCodeGeneration::QrSegment::Mode QAmiensRCodeGeneration::QrSegment::Mode::KANJI            (0x8,  8, 10, 12);
 
 
 
