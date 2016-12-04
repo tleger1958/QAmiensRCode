@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <vector>
-#include "QrSegment.hpp"
+#include "QAmiensRSegment.hpp"
 
 
 namespace QAmiensRCodeGeneration {
@@ -36,7 +36,7 @@ public:
 
 
 	// Retourne une copie de tous les octets, et remplissage jusqu'à l'octet le plus proche.
-	std::vector<uint8_t> getOctets() const;
+	std::vector<uint8_t> obtenirOctets() const;
 
 
 	// Ajoute le nombre donné de bits de la valeur donnée à cette séquence.
@@ -45,7 +45,7 @@ public:
 
 
 	// Ajoute les données du segment donné à ce tampon de bits.
-	void ajouterDonnees(const QrSegment &seg);
+	void ajouterDonnees(const QAmiensRSegment &seg);
 
 };
 

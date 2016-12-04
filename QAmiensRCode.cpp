@@ -19,28 +19,28 @@ const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensR
 
 
 QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeText(const char *text, const Ecc &ecl) {
-	std::vector<QrSegment> segs(QrSegment::makeSegments(text));
+	std::vector<QAmiensRSegment> segs(QAmiensRSegment::makeSegments(text));
 	return encodeSegments(segs, ecl);
 }
 
 
 QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeBinary(const std::vector<uint8_t> &data, const Ecc &ecl) {
-	std::vector<QrSegment> segs;
-	segs.push_back(QrSegment::makeBytes(data));
+	std::vector<QAmiensRSegment> segs;
+	segs.push_back(QAmiensRSegment::faireOctet(data));
 	return encodeSegments(segs, ecl);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeSegments(const std::vector<QrSegment> &segs, const Ecc &ecl,
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &ecl,
 		int minVersion, int maxVersion, int mask, bool boostEcl) {
 	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || mask < -1 || mask > 7)
 		throw "Invalid value";
-	
+
 	// Find the minimal version number to use
 	int version, dataUsedBits;
 	for (version = minVersion; ; version++) {
 		int dataCapacityBits = getNumDataCodewords(version, ecl) * 8;  // Number of data bits available
-		dataUsedBits = QrSegment::getTotalBits(segs, version);
+		dataUsedBits = QAmiensRSegment::getTotalBits(segs, version);
 		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits)
 			break;  // This version number is found to be suitable
 		if (version >= maxVersion)  // All versions in the range could not fit the given data
@@ -48,7 +48,7 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 	}
 	if (dataUsedBits == -1)
 		throw "Assertion error";
-	
+
 	// Increase the error correction level while the data still fits in the current version number
 	const Ecc *newEcl = &ecl;
 	if (boostEcl) {
@@ -56,14 +56,14 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		if (dataUsedBits <= getNumDataCodewords(version, Ecc::QUARTILE) * 8)  newEcl = &Ecc::QUARTILE;
 		if (dataUsedBits <= getNumDataCodewords(version, Ecc::HIGH    ) * 8)  newEcl = &Ecc::HIGH    ;
 	}
-	
+
 	// Create the data bit string by concatenating all segments
 	int dataCapacityBits = getNumDataCodewords(version, *newEcl) * 8;
 	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
-		const QrSegment &seg(segs.at(i));
+		const QAmiensRSegment &seg(segs.at(i));
 		bitTampon.ajouterBits(seg.mode.modeBits, 4);
-		bitTampon.ajouterBits(seg.numChars, seg.mode.numCharCountBits(version));
+		bitTampon.ajouterBits(seg.numChars, seg.mode.indicNbBits(version));
 		bitTampon.ajouterDonnees(seg);
 	}
 	
@@ -78,7 +78,7 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		throw "Assertion error";
 	
 	// Create the QR Code symbol
-	return QAmiensRCode(version, *newEcl, bitTampon.getBytes(), mask);
+	return QAmiensRCode(version, *newEcl, bitTampon.obtenirOctets(), mask);
 }
 
 

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "QrSegment.hpp"
+#include "QAmiensRSegment.hpp"
 
 
 namespace QAmiensRCodeGeneration {
@@ -67,7 +67,7 @@ public:
 	 * between modes (such as alphanumeric and binary) to encode text more efficiently.
 	 * This function is considered to be lower level than simply encoding text or binary data.
 	 */
-	static QAmiensRCode encodeSegments(const std::vector<QrSegment> &segs, const Ecc &ecl,
+	static QAmiensRCode encodeSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &ecl,
 		int minVersion=1, int maxVersion=40, int mask=-1, bool boostEcl=true);  // All optional parameters
 	
 	
