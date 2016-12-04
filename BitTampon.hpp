@@ -8,7 +8,7 @@
 namespace QAmiensRCodeGeneration {
 
 /*
- * Une suite de bits accessibles. Les bits sont organisés en 'gros-boutien" (ou 'big-endian' : https://fr.wikipedia.org/wiki/Endianness) dans un octet.
+ * Une suite de bits accessibles. Les bits sont organisés en 'gros-boutien' (ou 'big-endian' : https://fr.wikipedia.org/wiki/Endianness) dans un octet.
  */
 class BitTampon final {
 
