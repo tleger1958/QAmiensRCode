@@ -12,34 +12,34 @@ QAmiensRCodeGeneration::QAmiensRCode::Ecc::Ecc(int ord, int fb) :
 	formatBits(fb) {}
 
 
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::LOW     (0, 1);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::MEDIUM  (1, 0);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::QUARTILE(2, 3);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::HIGH    (3, 2);
+const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::BAS          (0, 1);
+const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::MOYEN        (1, 0);
+const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::MOYEN_PLUS   (2, 3);
+const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::HAUT         (3, 2);
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeText(const char *text, const Ecc &ecl) {
-	std::vector<QAmiensRSegment> segs(QAmiensRSegment::makeSegments(text));
-	return encodeSegments(segs, ecl);
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(const char *texte, const Ecc &nivCorrErreur) {
+	std::vector<QAmiensRSegment> segs(QAmiensRSegment::makeSegments(texte));
+	return encoderSegments(segs, nivCorrErreur);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeBinary(const std::vector<uint8_t> &data, const Ecc &ecl) {
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderOctet(const std::vector<uint8_t> &donnee, const Ecc &nivCorrErreur) {
 	std::vector<QAmiensRSegment> segs;
-	segs.push_back(QAmiensRSegment::faireOctet(data));
-	return encodeSegments(segs, ecl);
+	segs.push_back(QAmiensRSegment::faireOctet(donnee));
+	return encoderSegments(segs, nivCorrErreur);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encodeSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &ecl,
-		int minVersion, int maxVersion, int mask, bool boostEcl) {
-	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || mask < -1 || mask > 7)
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &nivCorrErreur,
+		int minVersion, int maxVersion, int masque, bool optimiserCorrection) {
+	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || masque < -1 || masque > 7)
 		throw "Invalid value";
 
 	// Find the minimal version number to use
 	int version, dataUsedBits;
 	for (version = minVersion; ; version++) {
-		int dataCapacityBits = getNumDataCodewords(version, ecl) * 8;  // Number of data bits available
+		int dataCapacityBits = getNumDataCodewords(version, nivCorrErreur) * 8;  // Number of data bits available
 		dataUsedBits = QAmiensRSegment::getTotalBits(segs, version);
 		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits)
 			break;  // This version number is found to be suitable
@@ -50,11 +50,11 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		throw "Assertion error";
 
 	// Increase the error correction level while the data still fits in the current version number
-	const Ecc *newEcl = &ecl;
-	if (boostEcl) {
-		if (dataUsedBits <= getNumDataCodewords(version, Ecc::MEDIUM  ) * 8)  newEcl = &Ecc::MEDIUM  ;
-		if (dataUsedBits <= getNumDataCodewords(version, Ecc::QUARTILE) * 8)  newEcl = &Ecc::QUARTILE;
-		if (dataUsedBits <= getNumDataCodewords(version, Ecc::HIGH    ) * 8)  newEcl = &Ecc::HIGH    ;
+	const Ecc *newEcl = &nivCorrErreur;
+	if (optimiserCorrection) {
+		if (dataUsedBits <= getNumDataCodewords(version, Ecc::MOYEN  ) * 8)  newEcl = &Ecc::MOYEN  ;
+		if (dataUsedBits <= getNumDataCodewords(version, Ecc::MOYEN_PLUS) * 8)  newEcl = &Ecc::MOYEN_PLUS;
+		if (dataUsedBits <= getNumDataCodewords(version, Ecc::HAUT    ) * 8)  newEcl = &Ecc::HAUT    ;
 	}
 
 	// Create the data bit string by concatenating all segments
@@ -66,73 +66,73 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		bitTampon.ajouterBits(seg.numChars, seg.mode.indicNbBits(version));
 		bitTampon.ajouterDonnees(seg);
 	}
-	
+
 	// Add terminator and pad up to a byte if applicable
 	bitTampon.ajouterBits(0, std::min(4, dataCapacityBits - bitTampon.obtenirLongueurBit()));
 	bitTampon.ajouterBits(0, (8 - bitTampon.obtenirLongueurBit() % 8) % 8);
-	
+
 	// Pad with alternate bytes until data capacity is reached
 	for (uint8_t padByte = 0xEC; bitTampon.obtenirLongueurBit() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
 		bitTampon.ajouterBits(padByte, 8);
 	if (bitTampon.obtenirLongueurBit() % 8 != 0)
 		throw "Assertion error";
-	
+
 	// Create the QR Code symbol
-	return QAmiensRCode(version, *newEcl, bitTampon.obtenirOctets(), mask);
+	return QAmiensRCode(version, *newEcl, bitTampon.obtenirOctets(), masque);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &ecl, const std::vector<uint8_t> &dataCodewords, int mask) :
+QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque) :
 		// Initialize scalar fields
 		version(ver),
-		size(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Avoid signed overflow undefined behavior
-		errorCorrectionLevel(ecl) {
-	
+		taille(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Avoid signed overflow undefined behavior
+		niveauCorrectionErreur(nivCorrErreur) {
+
 	// Check arguments
-	if (ver < 1 || ver > 40 || mask < -1 || mask > 7)
+	if (ver < 1 || ver > 40 || masque < -1 || masque > 7)
 		throw "Value out of range";
-	
-	std::vector<bool> row(size);
-	for (int i = 0; i < size; i++) {
+
+	std::vector<bool> row(taille);
+	for (int i = 0; i < taille; i++) {
 		modules.push_back(row);
-		isFunction.push_back(row);
+		estFonction.push_back(row);
 	}
-	
-	// Draw function patterns, draw all codewords, do masking
+
+	// Draw function patterns, draw all codewords, do masqueing
 	drawFunctionPatterns();
 	const std::vector<uint8_t> allCodewords(appendErrorCorrection(dataCodewords));
 	drawCodewords(allCodewords);
-	this->mask = handleConstructorMasking(mask);
+	this->masque = handleConstructorMasking(masque);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qr, int mask) :
+QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qr, int masque) :
 		// Copy scalar fields
 		version(qr.version),
-		size(qr.size),
-		errorCorrectionLevel(qr.errorCorrectionLevel) {
-	
+		taille(qr.taille),
+		niveauCorrectionErreur(qr.niveauCorrectionErreur) {
+
 	// Check arguments
-	if (mask < -1 || mask > 7)
-		throw "Mask value out of range";
-	
+	if (masque < -1 || masque > 7)
+		throw "masque value out of range";
+
 	// Handle grid fields
 	modules = qr.modules;
-	isFunction = qr.isFunction;
-	
-	// Handle masking
-	applyMask(qr.mask);  // Undo old mask
-	this->mask = handleConstructorMasking(mask);
+	estFonction = qr.estFonction;
+
+	// Handle masqueing
+	applyMask(qr.masque);  // Undo old masque
+	this->masque = handleConstructorMasking(masque);
 }
 
 
 int QAmiensRCodeGeneration::QAmiensRCode::getMask() const {
-	return mask;
+	return masque;
 }
 
 
 int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
-	if (0 <= x && x < size && 0 <= y && y < size)
+	if (0 <= x && x < taille && 0 <= y && y < taille)
 		return modules.at(y).at(x) ? 1 : 0;
 	else
 		return 0;  // Infinite white border
@@ -145,12 +145,12 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int border) const 
 	std::ostringstream sb;
 	sb << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ";
-	sb << (size + border * 2) << " " << (size + border * 2) << "\">\n";
+	sb << (taille + border * 2) << " " << (taille + border * 2) << "\">\n";
 	sb << "\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\" stroke-width=\"0\"/>\n";
 	sb << "\t<path d=\"";
 	bool head = true;
-	for (int y = -border; y < size + border; y++) {
-		for (int x = -border; x < size + border; x++) {
+	for (int y = -border; y < taille + border; y++) {
+		for (int x = -border; x < taille + border; x++) {
 			if (getModule(x, y) == 1) {
 				if (head)
 					head = false;
@@ -168,16 +168,16 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int border) const 
 
 void QAmiensRCodeGeneration::QAmiensRCode::drawFunctionPatterns() {
 	// Draw the horizontal and vertical timing patterns
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < taille; i++) {
 		setFunctionModule(6, i, i % 2 == 0);
 		setFunctionModule(i, 6, i % 2 == 0);
 	}
-	
+
 	// Draw 3 finder patterns (all corners except bottom right; overwrites some timing modules)
 	drawFinderPattern(3, 3);
-	drawFinderPattern(size - 4, 3);
-	drawFinderPattern(3, size - 4);
-	
+	drawFinderPattern(taille - 4, 3);
+	drawFinderPattern(3, taille - 4);
+
 	// Draw the numerous alignment patterns
 	const std::vector<int> alignPatPos(getAlignmentPatternPositions(version));
 	int numAlign = alignPatPos.size();
@@ -189,16 +189,16 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawFunctionPatterns() {
 				drawAlignmentPattern(alignPatPos.at(i), alignPatPos.at(j));
 		}
 	}
-	
+
 	// Draw configuration data
-	drawFormatBits(0);  // Dummy mask value; overwritten later in the constructor
+	drawFormatBits(0);  // Dummy masque value; overwritten later in the constructor
 	drawVersion();
 }
 
 
-void QAmiensRCodeGeneration::QAmiensRCode::drawFormatBits(int mask) {
+void QAmiensRCodeGeneration::QAmiensRCode::drawFormatBits(int masque) {
 	// Calculate error correction code and pack bits
-	int data = errorCorrectionLevel.formatBits << 3 | mask;  // errCorrLvl is uint2, mask is uint3
+	int data = niveauCorrectionErreur.formatBits << 3 | masque;  // errCorrLvl is uint2, masque is uint3
 	int rem = data;
 	for (int i = 0; i < 10; i++)
 		rem = (rem << 1) ^ ((rem >> 9) * 0x537);
@@ -206,7 +206,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawFormatBits(int mask) {
 	data ^= 0x5412;  // uint15
 	if (data >> 15 != 0)
 		throw "Assertion error";
-	
+
 	// Draw first copy
 	for (int i = 0; i <= 5; i++)
 		setFunctionModule(8, i, ((data >> i) & 1) != 0);
@@ -215,20 +215,20 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawFormatBits(int mask) {
 	setFunctionModule(7, 8, ((data >> 8) & 1) != 0);
 	for (int i = 9; i < 15; i++)
 		setFunctionModule(14 - i, 8, ((data >> i) & 1) != 0);
-	
+
 	// Draw second copy
 	for (int i = 0; i <= 7; i++)
-		setFunctionModule(size - 1 - i, 8, ((data >> i) & 1) != 0);
+		setFunctionModule(taille - 1 - i, 8, ((data >> i) & 1) != 0);
 	for (int i = 8; i < 15; i++)
-		setFunctionModule(8, size - 15 + i, ((data >> i) & 1) != 0);
-	setFunctionModule(8, size - 8, true);
+		setFunctionModule(8, taille - 15 + i, ((data >> i) & 1) != 0);
+	setFunctionModule(8, taille - 8, true);
 }
 
 
 void QAmiensRCodeGeneration::QAmiensRCode::drawVersion() {
 	if (version < 7)
 		return;
-	
+
 	// Calculate error correction code and pack bits
 	int rem = version;  // version is uint6, in the range [7, 40]
 	for (int i = 0; i < 12; i++)
@@ -236,11 +236,11 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawVersion() {
 	int data = version << 12 | rem;  // uint18
 	if (data >> 18 != 0)
 		throw "Assertion error";
-	
+
 	// Draw two copies
 	for (int i = 0; i < 18; i++) {
 		bool bit = ((data >> i) & 1) != 0;
-		int a = size - 11 + i % 3, b = i / 3;
+		int a = taille - 11 + i % 3, b = i / 3;
 		setFunctionModule(a, b, bit);
 		setFunctionModule(b, a, bit);
 	}
@@ -252,7 +252,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawFinderPattern(int x, int y) {
 		for (int j = -4; j <= 4; j++) {
 			int dist = std::max(std::abs(i), std::abs(j));  // Chebyshev/infinity norm
 			int xx = x + j, yy = y + i;
-			if (0 <= xx && xx < size && 0 <= yy && yy < size)
+			if (0 <= xx && xx < taille && 0 <= yy && yy < taille)
 				setFunctionModule(xx, yy, dist != 2 && dist != 4);
 		}
 	}
@@ -269,23 +269,23 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawAlignmentPattern(int x, int y) {
 
 void QAmiensRCodeGeneration::QAmiensRCode::setFunctionModule(int x, int y, bool isBlack) {
 	modules.at(y).at(x) = isBlack;
-	isFunction.at(y).at(x) = true;
+	estFonction.at(y).at(x) = true;
 }
 
 
 std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::appendErrorCorrection(const std::vector<uint8_t> &data) const {
-	if (data.size() != static_cast<unsigned int>(getNumDataCodewords(version, errorCorrectionLevel)))
+	if (data.size() != static_cast<unsigned int>(getNumDataCodewords(version, niveauCorrectionErreur)))
 		throw "Invalid argument";
-	
+
 	// Calculate parameter numbers
-	int numBlocks = NUM_ERROR_CORRECTION_BLOCKS[errorCorrectionLevel.ordinal][version];
-	int totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[errorCorrectionLevel.ordinal][version];
+	int numBlocks = NUM_ERROR_CORRECTION_BLOCKS[niveauCorrectionErreur.ordinal][version];
+	int totalEcc = NUM_ERROR_CORRECTION_CODEWORDS[niveauCorrectionErreur.ordinal][version];
 	if (totalEcc % numBlocks != 0)
 		throw "Assertion error";
 	int blockEccLen = totalEcc / numBlocks;
 	int numShortBlocks = numBlocks - getNumRawDataModules(version) / 8 % numBlocks;
 	int shortBlockLen = getNumRawDataModules(version) / 8 / numBlocks;
-	
+
 	// Split data into blocks and append ECC to each block
 	std::vector<std::vector<uint8_t>> blocks;
 	const ReedSolomonGenerator rs(blockEccLen);
@@ -299,7 +299,7 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::appendErrorCorrection
 		dat.insert(dat.end(), ecc.begin(), ecc.end());
 		blocks.push_back(dat);
 	}
-	
+
 	// Interleave (not concatenate) the bytes from every block into a single sequence
 	std::vector<uint8_t> result;
 	for (int i = 0; static_cast<unsigned int>(i) < blocks.at(0).size(); i++) {
@@ -318,18 +318,18 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::appendErrorCorrection
 void QAmiensRCodeGeneration::QAmiensRCode::drawCodewords(const std::vector<uint8_t> &data) {
 	if (data.size() != static_cast<unsigned int>(getNumRawDataModules(version) / 8))
 		throw "Invalid argument";
-	
+
 	size_t i = 0;  // Bit index into the data
 	// Do the funny zigzag scan
-	for (int right = size - 1; right >= 1; right -= 2) {  // Index of right column in each column pair
+	for (int right = taille - 1; right >= 1; right -= 2) {  // Index of right column in each column pair
 		if (right == 6)
 			right = 5;
-		for (int vert = 0; vert < size; vert++) {  // Vertical counter
+		for (int vert = 0; vert < taille; vert++) {  // Vertical counter
 			for (int j = 0; j < 2; j++) {
 				int x = right - j;  // Actual x coordinate
 				bool upwards = ((right & 2) == 0) ^ (x < 6);
-				int y = upwards ? size - 1 - vert : vert;  // Actual y coordinate
-				if (!isFunction.at(y).at(x) && i < data.size() * 8) {
+				int y = upwards ? taille - 1 - vert : vert;  // Actual y coordinate
+				if (!estFonction.at(y).at(x) && i < data.size() * 8) {
 					modules.at(y).at(x) = ((data.at(i >> 3) >> (7 - (i & 7))) & 1) != 0;
 					i++;
 				}
@@ -343,13 +343,13 @@ void QAmiensRCodeGeneration::QAmiensRCode::drawCodewords(const std::vector<uint8
 }
 
 
-void QAmiensRCodeGeneration::QAmiensRCode::applyMask(int mask) {
-	if (mask < 0 || mask > 7)
-		throw "Mask value out of range";
-	for (int y = 0; y < size; y++) {
-		for (int x = 0; x < size; x++) {
+void QAmiensRCodeGeneration::QAmiensRCode::applyMask(int masque) {
+	if (masque < 0 || masque > 7)
+		throw "masque value out of range";
+	for (int y = 0; y < taille; y++) {
+		for (int x = 0; x < taille; x++) {
 			bool invert;
-			switch (mask) {
+			switch (masque) {
 				case 0:  invert = (x + y) % 2 == 0;                    break;
 				case 1:  invert = y % 2 == 0;                          break;
 				case 2:  invert = x % 3 == 0;                          break;
@@ -360,41 +360,41 @@ void QAmiensRCodeGeneration::QAmiensRCode::applyMask(int mask) {
 				case 7:  invert = ((x + y) % 2 + x * y % 3) % 2 == 0;  break;
 				default:  throw "Assertion error";
 			}
-			modules.at(y).at(x) = modules.at(y).at(x) ^ (invert & !isFunction.at(y).at(x));
+			modules.at(y).at(x) = modules.at(y).at(x) ^ (invert & !estFonction.at(y).at(x));
 		}
 	}
 }
 
 
-int QAmiensRCodeGeneration::QAmiensRCode::handleConstructorMasking(int mask) {
-	if (mask == -1) {  // Automatically choose best mask
+int QAmiensRCodeGeneration::QAmiensRCode::handleConstructorMasking(int masque) {
+	if (masque == -1) {  // Automatically choose best masque
 		int32_t minPenalty = INT32_MAX;
 		for (int i = 0; i < 8; i++) {
 			drawFormatBits(i);
 			applyMask(i);
 			int penalty = getPenaltyScore();
 			if (penalty < minPenalty) {
-				mask = i;
+				masque = i;
 				minPenalty = penalty;
 			}
-			applyMask(i);  // Undoes the mask due to XOR
+			applyMask(i);  // Undoes the masque due to XOR
 		}
 	}
-	if (mask < 0 || mask > 7)
+	if (masque < 0 || masque > 7)
 		throw "Assertion error";
-	drawFormatBits(mask);  // Overwrite old format bits
-	applyMask(mask);  // Apply the final choice of mask
-	return mask;  // The caller shall assign this value to the final-declared field
+	drawFormatBits(masque);  // Overwrite old format bits
+	applyMask(masque);  // Apply the final choice of masque
+	return masque;  // The caller shall assign this value to the final-declared field
 }
 
 
 int QAmiensRCodeGeneration::QAmiensRCode::getPenaltyScore() const {
 	int result = 0;
-	
+
 	// Adjacent modules in row having same color
-	for (int y = 0; y < size; y++) {
+	for (int y = 0; y < taille; y++) {
 		bool colorX = modules.at(y).at(0);
-		for (int x = 1, runX = 1; x < size; x++) {
+		for (int x = 1, runX = 1; x < taille; x++) {
 			if (modules.at(y).at(x) != colorX) {
 				colorX = modules.at(y).at(x);
 				runX = 1;
@@ -408,9 +408,9 @@ int QAmiensRCodeGeneration::QAmiensRCode::getPenaltyScore() const {
 		}
 	}
 	// Adjacent modules in column having same color
-	for (int x = 0; x < size; x++) {
+	for (int x = 0; x < taille; x++) {
 		bool colorY = modules.at(0).at(x);
-		for (int y = 1, runY = 1; y < size; y++) {
+		for (int y = 1, runY = 1; y < taille; y++) {
 			if (modules.at(y).at(x) != colorY) {
 				colorY = modules.at(y).at(x);
 				runY = 1;
@@ -423,10 +423,10 @@ int QAmiensRCodeGeneration::QAmiensRCode::getPenaltyScore() const {
 			}
 		}
 	}
-	
+
 	// 2*2 blocks of modules having same color
-	for (int y = 0; y < size - 1; y++) {
-		for (int x = 0; x < size - 1; x++) {
+	for (int y = 0; y < taille - 1; y++) {
+		for (int x = 0; x < taille - 1; x++) {
 			bool  color = modules.at(y).at(x);
 			if (  color == modules.at(y).at(x + 1) &&
 			      color == modules.at(y + 1).at(x) &&
@@ -434,33 +434,33 @@ int QAmiensRCodeGeneration::QAmiensRCode::getPenaltyScore() const {
 				result += PENALTY_N2;
 		}
 	}
-	
+
 	// Finder-like pattern in rows
-	for (int y = 0; y < size; y++) {
-		for (int x = 0, bits = 0; x < size; x++) {
+	for (int y = 0; y < taille; y++) {
+		for (int x = 0, bits = 0; x < taille; x++) {
 			bits = ((bits << 1) & 0x7FF) | (modules.at(y).at(x) ? 1 : 0);
 			if (x >= 10 && (bits == 0x05D || bits == 0x5D0))  // Needs 11 bits accumulated
 				result += PENALTY_N3;
 		}
 	}
 	// Finder-like pattern in columns
-	for (int x = 0; x < size; x++) {
-		for (int y = 0, bits = 0; y < size; y++) {
+	for (int x = 0; x < taille; x++) {
+		for (int y = 0, bits = 0; y < taille; y++) {
 			bits = ((bits << 1) & 0x7FF) | (modules.at(y).at(x) ? 1 : 0);
 			if (y >= 10 && (bits == 0x05D || bits == 0x5D0))  // Needs 11 bits accumulated
 				result += PENALTY_N3;
 		}
 	}
-	
+
 	// Balance of black and white modules
 	int black = 0;
-	for (int y = 0; y < size; y++) {
-		for (int x = 0; x < size; x++) {
+	for (int y = 0; y < taille; y++) {
+		for (int x = 0; x < taille; x++) {
 			if (modules.at(y).at(x))
 				black++;
 		}
 	}
-	int total = size * size;
+	int total = taille * taille;
 	// Find smallest k such that (45-5k)% <= dark/total <= (55+5k)%
 	for (int k = 0; black*20 < (9-k)*total || black*20 > (11+k)*total; k++)
 		result += PENALTY_N4;
@@ -477,13 +477,13 @@ std::vector<int> QAmiensRCodeGeneration::QAmiensRCode::getAlignmentPatternPositi
 		int numAlign = ver / 7 + 2;
 		int step;
 		if (ver != 32)
-			step = (ver * 4 + numAlign * 2 + 1) / (2 * numAlign - 2) * 2;  // ceil((size - 13) / (2*numAlign - 2)) * 2
+			step = (ver * 4 + numAlign * 2 + 1) / (2 * numAlign - 2) * 2;  // ceil((taille - 13) / (2*numAlign - 2)) * 2
 		else  // C-C-C-Combo breaker!
 			step = 26;
-		
+
 		std::vector<int> result;
-		int size = ver * 4 + 17;
-		for (int i = 0, pos = size - 7; i < numAlign - 1; i++, pos -= step)
+		int taille = ver * 4 + 17;
+		for (int i = 0, pos = taille - 7; i < numAlign - 1; i++, pos -= step)
 			result.insert(result.begin(), pos);
 		result.insert(result.begin(), 6);
 		return result;
@@ -505,10 +505,10 @@ int QAmiensRCodeGeneration::QAmiensRCode::getNumRawDataModules(int ver) {
 }
 
 
-int QAmiensRCodeGeneration::QAmiensRCode::getNumDataCodewords(int ver, const Ecc &ecl) {
+int QAmiensRCodeGeneration::QAmiensRCode::getNumDataCodewords(int ver, const Ecc &nivCorrErreur) {
 	if (ver < 1 || ver > 40)
 		throw "Version number out of range";
-	return getNumRawDataModules(ver) / 8 - NUM_ERROR_CORRECTION_CODEWORDS[ecl.ordinal][ver];
+	return getNumRawDataModules(ver) / 8 - NUM_ERROR_CORRECTION_CODEWORDS[nivCorrErreur.ordinal][ver];
 }
 
 
@@ -524,7 +524,7 @@ const int16_t QAmiensRCodeGeneration::QAmiensRCode::NUM_ERROR_CORRECTION_CODEWOR
 	// Version: (note that index 0 is for padding, and is set to an illegal value)
 	//0,  1,  2,  3,  4,  5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,   37,   38,   39,   40    Error correction level
 	{-1,  7, 10, 15, 20, 26,  36,  40,  48,  60,  72,  80,  96, 104, 120, 132, 144, 168, 180, 196, 224, 224, 252, 270, 300,  312,  336,  360,  390,  420,  450,  480,  510,  540,  570,  570,  600,  630,  660,  720,  750},  // Low
-	{-1, 10, 16, 26, 36, 48,  64,  72,  88, 110, 130, 150, 176, 198, 216, 240, 280, 308, 338, 364, 416, 442, 476, 504, 560,  588,  644,  700,  728,  784,  812,  868,  924,  980, 1036, 1064, 1120, 1204, 1260, 1316, 1372},  // Medium
+	{-1, 10, 16, 26, 36, 48,  64,  72,  88, 110, 130, 150, 176, 198, 216, 240, 280, 308, 338, 364, 416, 442, 476, 504, 560,  588,  644,  700,  728,  784,  812,  868,  924,  980, 1036, 1064, 1120, 1204, 1260, 1316, 1372},  // MOYEN
 	{-1, 13, 22, 36, 52, 72,  96, 108, 132, 160, 192, 224, 260, 288, 320, 360, 408, 448, 504, 546, 600, 644, 690, 750, 810,  870,  952, 1020, 1050, 1140, 1200, 1290, 1350, 1440, 1530, 1590, 1680, 1770, 1860, 1950, 2040},  // Quartile
 	{-1, 17, 28, 44, 64, 88, 112, 130, 156, 192, 224, 264, 308, 352, 384, 432, 480, 532, 588, 650, 700, 750, 816, 900, 960, 1050, 1110, 1200, 1260, 1350, 1440, 1530, 1620, 1710, 1800, 1890, 1980, 2100, 2220, 2310, 2430},  // High
 };
@@ -533,7 +533,7 @@ const int8_t QAmiensRCodeGeneration::QAmiensRCode::NUM_ERROR_CORRECTION_BLOCKS[4
 	// Version: (note that index 0 is for padding, and is set to an illegal value)
 	//0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40    Error correction level
 	{-1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4,  4,  4,  4,  4,  6,  6,  6,  6,  7,  8,  8,  9,  9, 10, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 19, 20, 21, 22, 24, 25},  // Low
-	{-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5,  5,  8,  9,  9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49},  // Medium
+	{-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5,  5,  8,  9,  9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49},  // MOYEN
 	{-1, 1, 1, 2, 2, 4, 4, 6, 6, 8, 8,  8, 10, 12, 16, 12, 17, 16, 18, 21, 20, 23, 23, 25, 27, 29, 34, 34, 35, 38, 40, 43, 45, 48, 51, 53, 56, 59, 62, 65, 68},  // Quartile
 	{-1, 1, 1, 2, 4, 4, 4, 5, 6, 8, 8, 11, 11, 16, 16, 18, 16, 19, 21, 25, 25, 25, 34, 30, 32, 35, 37, 40, 42, 45, 48, 51, 54, 57, 60, 63, 66, 70, 74, 77, 81},  // High
 };
@@ -543,11 +543,11 @@ QAmiensRCodeGeneration::QAmiensRCode::ReedSolomonGenerator::ReedSolomonGenerator
 		coefficients() {
 	if (degree < 1 || degree > 255)
 		throw "Degree out of range";
-	
+
 	// Start with the monomial x^0
 	coefficients.resize(degree);
 	coefficients.at(degree - 1) = 1;
-	
+
 	// Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
 	// drop the highest term, and store the rest of the coefficients in order of descending powers.
 	// Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
