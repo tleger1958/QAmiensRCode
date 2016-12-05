@@ -48,7 +48,7 @@ public:
 
 		// Renvoie la largeur de bit du champ de comptage de caractères de segment pour cet objet mode au numéro de version donné.
 	public:
-		int indicNbBits(int ver) const;
+		int indicNbBits(int version) const;
 
 	};
 
