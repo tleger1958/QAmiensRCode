@@ -45,9 +45,11 @@ public:
 	
 	/* 
 	 * Retourne un symbole QAmiensRCode représentant la chaîne de texte Unicode donnée au niveau de correction d'erreur donné.
-	 * As a conservative upper bound, this function is guaranteed to succeed for strings that have 738 or fewer Unicode
-	 * code points (not UTF-16 code units). The smallest possible QR Code version is automatically chosen for the output.
-	 * The ECC level of the result may be higher than the ecl argument if it can be done without increasing the version.
+	 * En tant que limite supérieure conservatrice, cette fonction est garantie pour réussir pour les chaînes qui ont 738 ou
+	 * moins de points de code Unicode (ça n'est pas unités de code UTF-16). La version de QAmiensRCode la plus petite 
+	 * possible est automatiquement choisie pour la sortie.
+	 * Le niveau de correction d'erreurs du résultat peut être supérieur à l'argument 'ecl' si cela peut être fait*
+	 * sans augmenter la version.
 	 */
 	static QAmiensRCode encodeText(const char *text, const Ecc &ecl);
 	
