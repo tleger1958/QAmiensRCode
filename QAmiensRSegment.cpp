@@ -31,65 +31,65 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 }
 
 
-QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment::faireNumerique(const char *digits) {
+QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment::faireNumerique(const char *chiffre) {
 	BitTampon bitTampon;
-	int accumData = 0;
-	int accumCount = 0;
-	int charCount = 0;
-	for (; *digits != '\0'; digits++, charCount++) {
-		char c = *digits;
+	int donneeAccumulee = 0;
+	int compteurAccumule = 0;
+	int compteurCaractere = 0;
+	for (; *chiffre != '\0'; chiffre++, compteurCaractere++) {
+		char c = *chiffre;
 		if (c < '0' || c > '9')
-			throw "String contains non-numeric characters";
-		accumData = accumData * 10 + (c - '0');
-		accumCount++;
-		if (accumCount == 3) {
-			bitTampon.ajouterBits(accumData, 10);
-			accumData = 0;
-			accumCount = 0;
+			throw "Y'a des carctères qui sont pas des nombres";
+		donneeAccumulee = donneeAccumulee * 10 + (c - '0');
+		compteurAccumule++;
+		if (compteurAccumule == 3) {
+			bitTampon.ajouterBits(donneeAccumulee, 10);
+			donneeAccumulee = 0;
+			compteurAccumule = 0;
 		}
 	}
-	if (accumCount > 0)  // 1 or 2 digits remaining
-		bitTampon.ajouterBits(accumData, accumCount * 3 + 1);
-	return QAmiensRSegment(Mode::NUMERIQUE, charCount, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
+	if (compteurAccumule > 0)  // 1 or 2 digits remaining
+		bitTampon.ajouterBits(donneeAccumulee, compteurAccumule * 3 + 1);
+	return QAmiensRSegment(Mode::NUMERIQUE, compteurCaractere, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
 }
 
 
 QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment::makeAlphanumeric(const char *text) {
 	BitTampon bitTampon;
-	int accumData = 0;
-	int accumCount = 0;
-	int charCount = 0;
+	int donneeAccumulee = 0;
+	int compteurAccumule = 0;
+	int compteurCaractere = 0;
 	for (; *text != '\0'; text++, charCount++) {
 		char c = *text;
 		if (c < ' ' || c > 'Z')
-			throw "String contains unencodable characters in alphanumeric mode";
-		accumData = accumData * 45 + ALPHANUMERIC_ENCODING_TABLE[c - ' '];
-		accumCount++;
-		if (accumCount == 2) {
+			throw "Y'a des caractères qui sont pas alphanumériques";
+		donneeAccumulee = donneeAccumulee * 45 + TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '];
+		compteurAccumule++;
+		if (compteurAccumule == 2) {
 			bitTampon.ajouterBits(accumData, 11);
-			accumData = 0;
-			accumCount = 0;
+			donneeAccumulee = 0;
+			compteurAccumule = 0;
 		}
 	}
-	if (accumCount > 0)  // 1 character remaining
-		bitTampon.ajouterBits(accumData, 6);
-	return QAmiensRSegment(Mode::ALPHANUMERIQUE, charCount, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
+	if (compteurAccumule > 0)  // reste 1 caractère
+		bitTampon.ajouterBits(donneeAccumulee, 6);
+	return QAmiensRSegment(Mode::ALPHANUMERIQUE, compteurCaractere, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
 }
 
 
 std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAmiensRSegment::makeSegments(const char *text) {
-	// Select the most efficient segment encoding automatically
+	// Selectionne le mode d'encodage le plus optimisé
 	std::vector<QAmiensRSegment> result;
-	if (*text == '\0');  // Leave the vector empty
+	if (*text == '\0');  // Laisse le vector vide
 	else if (QAmiensRSegment::isNumeric(text))
 		result.push_back(QAmiensRSegment::faireNumerique(text));
 	else if (QAmiensRSegment::isAlphanumeric(text))
 		result.push_back(QAmiensRSegment::makeAlphanumeric(text));
 	else {
-		std::vector<uint8_t> bytes;
+		std::vector<uint8_t> octets;
 		for (; *text != '\0'; text++)
-			bytes.push_back((unsigned char &&) static_cast<uint8_t>(*text));
-		result.push_back(QAmiensRSegment::faireOctet(bytes));
+			octets.push_back((unsigned char &&) static_cast<uint8_t>(*text));
+		result.push_back(QAmiensRSegment::faireOctet(octets));
 	}
 	return result;
 }
@@ -101,18 +101,18 @@ QAmiensRCodeGeneration::QAmiensRSegment::QAmiensRSegment(const Mode &md, int num
 		donnee(b),
 		bitLength(bitLen) {
 	if (numCh < 0 || bitLen < 0 || b.size() != static_cast<unsigned int>((bitLen + 7) / 8))
-		throw "Invalid value";
+		throw "Valeur invalide";
 }
 
 
 int QAmiensRCodeGeneration::QAmiensRSegment::getTotalBits(const std::vector<QAmiensRSegment> &segs, int version) {
 	if (version < 1 || version > 40)
-		throw "Version number out of range";
+		throw "Version non valide";
 	int result = 0;
 	for (size_t i = 0; i < segs.size(); i++) {
 		const QAmiensRSegment &seg(segs.at(i));
 		int ccbits = seg.mode.indicNbBits(version);
-		// Fail if segment length value doesn't fit in the length field's bit-width
+		// Échoue si la valeur de longueur de segment ne correspond pas à la largeur de bit du champ de longueur
 		if (seg.numChars >= (1 << ccbits))
 			return -1;
 		result += 4 + ccbits + seg.bitLength;
@@ -121,17 +121,17 @@ int QAmiensRCodeGeneration::QAmiensRSegment::getTotalBits(const std::vector<QAmi
 }
 
 
-bool QAmiensRCodeGeneration::QAmiensRSegment::isAlphanumeric(const char *text) {
+bool QAmiensRCodeGeneration::QAmiensRSegment::estAlphanumerique(const char *text) {
 	for (; *text != '\0'; text++) {
 		char c = *text;
-		if (c < ' ' || c > 'Z' || ALPHANUMERIC_ENCODING_TABLE[c - ' '] == -1)
+		if (c < ' ' || c > 'Z' || TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '] == -1)
 			return false;
 	}
 	return true;
 }
 
 
-bool QAmiensRCodeGeneration::QAmiensRSegment::isNumeric(const char *text) {
+bool QAmiensRCodeGeneration::QAmiensRSegment::estNumerique(const char *text) {
 	for (; *text != '\0'; text++) {
 		char c = *text;
 		if (c < '0' || c > '9')
@@ -141,9 +141,9 @@ bool QAmiensRCodeGeneration::QAmiensRSegment::isNumeric(const char *text) {
 }
 
 
-const int8_t QAmiensRCodeGeneration::QAmiensRSegment::ALPHANUMERIC_ENCODING_TABLE[59] = {
-	// SP,  !,  ",  #,  $,  %,  &,  ',  (,  ),  *,  +,  ,,  -,  .,  /,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  :,  ;,  <,  =,  >,  ?,  @,  // ASCII codes 32 to 64
-	   36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1, -1,  // Array indices 0 to 32
-	   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,  // Array indices 33 to 58
-	//  A,  B,  C,  D,  E,  F,  G,  H,  I,  J,  K,  L,  M,  N,  O,  P,  Q,  R,  S,  T,  U,  V,  W,  X,  Y,  Z,  // ASCII codes 65 to 90
+const int8_t QAmiensRCodeGeneration::QAmiensRSegment::TABLE_ENCODAGE_ALPHANUMERIQUE[59] = {
+	// SP,  !,  ",  #,  $,  %,  &,  ',  (,  ),  *,  +,  ,,  -,  .,  /,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  :,  ;,  <,  =,  >,  ?,  @,  // Codes ASCII de 32 à 64
+	   36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1, -1,  // Indices du tableau de 0 à 32
+	   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,  // Indices du tableau de 33 à 58
+	//  A,  B,  C,  D,  E,  F,  G,  H,  I,  J,  K,  L,  M,  N,  O,  P,  Q,  R,  S,  T,  U,  V,  W,  X,  Y,  Z,  // Codes ASCII de 65 à 90
 };
