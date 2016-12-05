@@ -8,42 +8,43 @@
 
 namespace QAmiensRCodeGeneration {
 
-/* 
- * Represents an immutable square grid of black and white cells for a QR Code symbol, and
- * provides static functions to create a QR Code from user-supplied textual or binary data.
- * This class covers the QR Code model 2 specification, supporting all versions (sizes)
- * from 1 to 40, all 4 error correction levels, and only 3 character encoding modes.
+
+/*
+ * Représente une grille carrée immuable de cellules noires et blanches pour un symbole de QAmiensRCode, et
+ * fournit des fonctions statiques pour créer un QAmiensRCode à partir de données textuelles ou binaires fournies par l'utilisateur.
+ * Cette classe couvre la spécification du modèle 2 de QAmiensRCode, prenant en charge toutes les versions (les tailles)
+ * de 1 à 40, les 4 niveaux de correction d'erreur, mais seulement 3 modes d'encodage de caractères.
  */
 class QAmiensRCode final {
 	
-	/*---- Public helper enumeration ----*/
+	/*---- Énumération publique du helper ----*/
 public:
 	
 	/* 
-	 * Represents the error correction level used in a QR Code symbol.
+	 * Représente le niveau de correction d'erreur utilisé dans un symbole de QAmiensRCode.
 	 */
 	class Ecc final {
-		// Constants declared in ascending order of error protection.
+		// Constantes déclarées par ordre croissant de protection contre les erreurs.
 	public:
 		const static Ecc LOW, MEDIUM, QUARTILE, HIGH;
 		
-		// Fields.
+		// Champs.
 	public:
-		const int ordinal;  // (Public) In the range 0 to 3 (unsigned 2-bit integer).
-		const int formatBits;  // (Package-private) In the range 0 to 3 (unsigned 2-bit integer).
+		const int ordinal;  // (Public) Dans la plage 0 à 3 (entier non signé de 2 bits).
+		const int formatBits;  // Dans la plage 0 à 3 (entier non signé de 2 bits).
 		
-		// Constructor.
+		// Constructeur.
 	private:
 		Ecc(int ord, int fb);
 	};
 	
 	
 	
-	/*---- Public static factory functions ----*/
+	/*---- Fonctions statiques publique d'usine :D (si vous avez pas compris la blague, MAAALHEEUUR A VOUS !) ----*/
 public:
 	
 	/* 
-	 * Returns a QR Code symbol representing the given Unicode text string at the given error correction level.
+	 * Retourne un symbole QAmiensRCode représentant la chaîne de texte Unicode donnée au niveau de correction d'erreur donné.
 	 * As a conservative upper bound, this function is guaranteed to succeed for strings that have 738 or fewer Unicode
 	 * code points (not UTF-16 code units). The smallest possible QR Code version is automatically chosen for the output.
 	 * The ECC level of the result may be higher than the ecl argument if it can be done without increasing the version.
