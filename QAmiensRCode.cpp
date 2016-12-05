@@ -44,10 +44,10 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits)
 			break;  // This version number is found to be suitable
 		if (version >= maxVersion)  // All versions in the range could not fit the given data
-			throw "Data too long";
+			throw "Trop de donnees";
 	}
 	if (dataUsedBits == -1)
-		throw "Assertion error";
+		throw "Erreur d'assertion";
 
 	// Increase the error correction level while the data still fits in the current version number
 	const Ecc *newEcl = &nivCorrErreur;
@@ -83,22 +83,22 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 
 
 QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque) :
-		// Initialize scalar fields
+		// Initialise les champs scalaires
 		version(ver),
-		taille(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Avoid signed overflow undefined behavior
+		taille(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Évite le dépassement de signature non défini
 		niveauCorrectionErreur(nivCorrErreur) {
 
-	// Check arguments
+	// Vérifie les arguments
 	if (ver < 1 || ver > 40 || masque < -1 || masque > 7)
-		throw "Value out of range";
+		throw "Valeur non valide";
 
-	std::vector<bool> row(taille);
+	std::vector<bool> rang(taille);
 	for (int i = 0; i < taille; i++) {
-		modules.push_back(row);
-		estFonction.push_back(row);
+		modules.push_back(rang);
+		estFonction.push_back(rang);
 	}
 
-	// Draw function patterns, draw all codewords, do masqueing
+	// Dessine des motifs de fonction, les mots code et applique le masque
 	drawFunctionPatterns();
 	const std::vector<uint8_t> allCodewords(appendErrorCorrection(dataCodewords));
 	drawCodewords(allCodewords);
@@ -126,7 +126,7 @@ QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qr, int m
 }
 
 
-int QAmiensRCodeGeneration::QAmiensRCode::getMask() const {
+int QAmiensRCodeGeneration::QAmiensRCode::getMasque() const {
 	return masque;
 }
 
@@ -135,28 +135,28 @@ int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
 	if (0 <= x && x < taille && 0 <= y && y < taille)
 		return modules.at(y).at(x) ? 1 : 0;
 	else
-		return 0;  // Infinite white border
+		return 0;  // Infinite white bordure
 }
 
 
-std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int border) const {
-	if (border < 0)
-		throw "Border must be non-negative";
+std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const {
+	if (bordure < 0)
+		throw "La bordure ne peut pas être négative, tu codes comme un noob !";
 	std::ostringstream sb;
 	sb << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ";
-	sb << (taille + border * 2) << " " << (taille + border * 2) << "\">\n";
+	sb << (taille + bordure * 2) << " " << (taille + bordure * 2) << "\">\n";
 	sb << "\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\" stroke-width=\"0\"/>\n";
 	sb << "\t<path d=\"";
 	bool head = true;
-	for (int y = -border; y < taille + border; y++) {
-		for (int x = -border; x < taille + border; x++) {
+	for (int y = -bordure; y < taille + bordure; y++) {
+		for (int x = -bordure; x < taille + bordure; x++) {
 			if (getModule(x, y) == 1) {
 				if (head)
 					head = false;
 				else
 					sb << " ";
-				sb << "M" << (x + border) << "," << (y + border) << "h1v1h-1z";
+				sb << "M" << (x + bordure) << "," << (y + bordure) << "h1v1h-1z";
 			}
 		}
 	}

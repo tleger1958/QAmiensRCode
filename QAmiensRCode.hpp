@@ -113,37 +113,37 @@ public:
 
 
 	/*
-	 * Creates a new QR Code symbol based on the given existing object, but with a potentially
-	 * different mask pattern. The version, error correction level, codewords, etc. of the newly
-	 * created object are all identical to the argument object; only the mask may differ.
+	 * Crée un nouveau QAmiensRCode à partir d'un objet existant, mais avec un modèle de masque
+     * potentiellement différent. La version, le niveau de correction d'erreur, les mots de code, etc.
+     * de l'objet créé sont tous identiques à l'objet argument; seul le masque peut différer.
 	 */
 	QAmiensRCode(const QAmiensRCode &qr, int masque);
 
 
 
-	/*---- Public instance methods ----*/
+	/*---- Méthodes d'instance publique ----*/
 public:
 
-	int getMask() const;
+	int getMasque() const;
 
 
 	/*
-	 * Returns the color of the module (pixel) at the given coordinates, which is either 0 for white or 1 for black. The top
-	 * left corner has the coordinates (x=0, y=0). If the given coordinates are out of bounds, then 0 (white) is returned.
+	 * Renvoie la couleur du pixel aux coordonnées données, 0 pour blanc et 1 pour noir. (0, 0) c'est en haut à gauche.
+	 * Si on est en dehors du QAmiensRCode, alors ça renvoie 0.
 	 */
 	int getModule(int x, int y) const;
 
 
 	/*
-	 * Based on the given number of border modules to add as padding, this returns a
-	 * string whose contents represents an SVG XML file that depicts this QR Code symbol.
-	 * Note that Unix newlines (\n) are always used, regardless of the platform.
+	 * En fonction du nombre donné de modules de bordure à ajouter comme remplissage, cela renvoie un
+     * Chaîne dont le contenu représente un fichier XML SVG qui représente le QAmiensRCode.
+     * Les saut de lignes style Unix (\n) sont toujours utilisées, sur tous les OS.
 	 */
-	std::string toSvgString(int border) const;
+	std::string toSvgString(int bordure) const;
 
 
 
-	/*---- Private helper methods for constructor: Drawing function modules ----*/
+	/*---- Méthodes d'aide privée pour le constructeur: modules de fonctions de dessin ----*/
 private:
 
 	void drawFunctionPatterns();
