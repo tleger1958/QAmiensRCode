@@ -77,11 +77,11 @@ public:
 public:
 
 	// Teste si on peut encoder en alphanumérique
-	static bool isAlphanumeric(const char *text);
+	static bool estAlphanumerique(const char *text);
 
 
 	// Teste si on peut encoder en numérique
-	static bool isNumeric(const char *text);
+	static bool estNumerique(const char *text);
 
 
 
@@ -113,7 +113,7 @@ public:
 private:
 
 	// Table ASCII des caractères numériques
-	static const int8_t ALPHANUMERIC_ENCODING_TABLE[59];
+	static const int8_t TABLE_ENCODAGE_ALPHANUMERIQUE[59];
 
 };
 

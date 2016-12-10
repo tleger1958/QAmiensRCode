@@ -36,20 +36,20 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || masque < -1 || masque > 7)
 		throw "Invalid value";
 
-	// Find the minimal version number to use
+	// Détermination de la plus petite version à utiliser
 	int version, dataUsedBits;
 	for (version = minVersion; ; version++) {
-		int dataCapacityBits = getNumDataCodewords(version, nivCorrErreur) * 8;  // Number of data bits available
+		int dataCapacityBits = getNumDataCodewords(version, nivCorrErreur) * 8;  // Nombre de bits nécessaire
 		dataUsedBits = QAmiensRSegment::getTotalBits(segs, version);
 		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits)
-			break;  // This version number is found to be suitable
-		if (version >= maxVersion)  // All versions in the range could not fit the given data
+			break;  // Cette vrsion est jugé appropriée
+		if (version >= maxVersion)  // Toutes les versions de la gamme ne peuvent pas correspondre aux données... données ! :o
 			throw "Trop de donnees";
 	}
 	if (dataUsedBits == -1)
 		throw "Erreur d'assertion";
 
-	// Increase the error correction level while the data still fits in the current version number
+	// Augmenter le niveau de correction d'erreur mais laisser les données dans la version actuelle
 	const Ecc *newEcl = &nivCorrErreur;
 	if (optimiserCorrection) {
 		if (dataUsedBits <= getNumDataCodewords(version, Ecc::MOYEN  ) * 8)  newEcl = &Ecc::MOYEN  ;
@@ -57,7 +57,7 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		if (dataUsedBits <= getNumDataCodewords(version, Ecc::HAUT    ) * 8)  newEcl = &Ecc::HAUT    ;
 	}
 
-	// Create the data bit string by concatenating all segments
+	// Créez la chaîne de bits de données en concaténant tous les segments
 	int dataCapacityBits = getNumDataCodewords(version, *newEcl) * 8;
 	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
@@ -67,17 +67,17 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		bitTampon.ajouterDonnees(seg);
 	}
 
-	// Add terminator and pad up to a byte if applicable
+	// Ajouter un terminateur et un 'pad' à un octet, le cas échéant
 	bitTampon.ajouterBits(0, std::min(4, dataCapacityBits - bitTampon.obtenirLongueurBit()));
 	bitTampon.ajouterBits(0, (8 - bitTampon.obtenirLongueurBit() % 8) % 8);
 
-	// Pad with alternate bytes until data capacity is reached
+	// 'Pad' avec des octets de remplacement jusqu'à ce que la capacité de données soit atteinte
 	for (uint8_t padByte = 0xEC; bitTampon.obtenirLongueurBit() < dataCapacityBits; padByte ^= 0xEC ^ 0x11)
 		bitTampon.ajouterBits(padByte, 8);
 	if (bitTampon.obtenirLongueurBit() % 8 != 0)
 		throw "Assertion error";
 
-	// Create the QR Code symbol
+	// Création du symbole du QAmiensRCode
 	return QAmiensRCode(version, *newEcl, bitTampon.obtenirOctets(), masque);
 }
 
@@ -107,21 +107,21 @@ QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &nivCorrEr
 
 
 QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qr, int masque) :
-		// Copy scalar fields
+		// Copie des champs scalaires
 		version(qr.version),
 		taille(qr.taille),
 		niveauCorrectionErreur(qr.niveauCorrectionErreur) {
 
-	// Check arguments
+	// Vérfication des arguments
 	if (masque < -1 || masque > 7)
-		throw "masque value out of range";
+		throw "Valeur du masque en dehors de la plage autorisée";
 
 	// Handle grid fields
 	modules = qr.modules;
 	estFonction = qr.estFonction;
 
-	// Handle masqueing
-	applyMask(qr.masque);  // Undo old masque
+	// Masquage de l'indicateur
+	applyMask(qr.masque);  // Enlever l'ancien masque
 	this->masque = handleConstructorMasking(masque);
 }
 
@@ -135,13 +135,13 @@ int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
 	if (0 <= x && x < taille && 0 <= y && y < taille)
 		return modules.at(y).at(x) ? 1 : 0;
 	else
-		return 0;  // Infinite white bordure
+		return 0;  // Bordure blanche infinie
 }
 
 
 std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const {
 	if (bordure < 0)
-		throw "La bordure ne peut pas être négative, tu codes comme un noob !";
+		throw "La bordure ne peut pas être négative, tu codes comme un noob ! -Mais TG Hugo, tu fous rien depuis le début !";
 	std::ostringstream sb;
 	sb << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ";
@@ -167,31 +167,31 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const
 
 
 void QAmiensRCodeGeneration::QAmiensRCode::drawFunctionPatterns() {
-	// Draw the horizontal and vertical timing patterns
+	// Dessiner les modèles de synchronisation horizontale et verticale
 	for (int i = 0; i < taille; i++) {
 		setFunctionModule(6, i, i % 2 == 0);
 		setFunctionModule(i, 6, i % 2 == 0);
 	}
 
-	// Draw 3 finder patterns (all corners except bottom right; overwrites some timing modules)
+	// Dessinez 3 modèles de recherche (tous les coins sauf en bas à droite ; écrase certains modules de synchronisation)
 	drawFinderPattern(3, 3);
 	drawFinderPattern(taille - 4, 3);
 	drawFinderPattern(3, taille - 4);
 
-	// Draw the numerous alignment patterns
+	// Dessinez les nombreux motifs d'alignement
 	const std::vector<int> alignPatPos(getAlignmentPatternPositions(version));
 	int numAlign = alignPatPos.size();
 	for (int i = 0; i < numAlign; i++) {
 		for (int j = 0; j < numAlign; j++) {
 			if ((i == 0 && j == 0) || (i == 0 && j == numAlign - 1) || (i == numAlign - 1 && j == 0))
-				continue;  // Skip the three finder corners
+				continue;  // Ignorer les trois 'finder' des coins
 			else
 				drawAlignmentPattern(alignPatPos.at(i), alignPatPos.at(j));
 		}
 	}
 
-	// Draw configuration data
-	drawFormatBits(0);  // Dummy masque value; overwritten later in the constructor
+	// Dessiner des données de configuration
+	drawFormatBits(0);  // Valeur masque factice, écrasé plus tard dans le constructeur
 	drawVersion();
 }
 

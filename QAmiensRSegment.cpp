@@ -59,14 +59,14 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 	int donneeAccumulee = 0;
 	int compteurAccumule = 0;
 	int compteurCaractere = 0;
-	for (; *texte != '\0'; texte++, charCount++) {
+	for (; *texte != '\0'; texte++, compteurCaractere++) {
 		char c = *texte;
 		if (c < ' ' || c > 'Z')
 			throw "Y'a des caractères qui sont pas alphanumériques";
 		donneeAccumulee = donneeAccumulee * 45 + TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '];
 		compteurAccumule++;
 		if (compteurAccumule == 2) {
-			bitTampon.ajouterBits(accumData, 11);
+			bitTampon.ajouterBits(donneeAccumulee, 11);
 			donneeAccumulee = 0;
 			compteurAccumule = 0;
 		}
@@ -81,9 +81,9 @@ std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAm
 	// Selectionne le mode d'encodage le plus optimisé
 	std::vector<QAmiensRSegment> result;
 	if (*texte == '\0');  // Laisse le vector vide
-	else if (QAmiensRSegment::isNumeric(texte))
+	else if (QAmiensRSegment::estNumerique(texte))
 		result.push_back(QAmiensRSegment::faireNumerique(texte));
-	else if (QAmiensRSegment::isAlphanumeric(texte))
+	else if (QAmiensRSegment::estAlphanumerique(texte))
 		result.push_back(QAmiensRSegment::makeAlphanumeric(texte));
 	else {
 		std::vector<uint8_t> octets;

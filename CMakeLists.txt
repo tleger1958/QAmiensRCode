@@ -3,7 +3,7 @@ project(QAmiensRCode2)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES BitTampon.cpp QAmiensRCode.cpp QAmiensRCode_main.cpp QrSegment.cpp)
-set(HEADER_FILES BitTampon.hpp QAmiensRCode.hpp QrSegment.hpp)
+set(SOURCE_FILES BitTampon.cpp QAmiensRCode.cpp QAmiensRCode_main.cpp QAmiensRSegment.cpp)
+set(HEADER_FILES BitTampon.hpp QAmiensRCode.hpp QAmiensRSegment.hpp)
 set(OTHER_FILES QAmiensRCode.xml)
 add_executable(QAmiensRCode2 ${SOURCE_FILES} ${HEADER_FILES} ${OTHER_FILES})
