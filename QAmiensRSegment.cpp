@@ -38,8 +38,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 	int compteurCaractere = 0;
 	for (; *chiffre != '\0'; chiffre++, compteurCaractere++) {
 		char c = *chiffre;
-		if (c < '0' || c > '9')
-			throw "Y'a des carctères qui sont pas des nombres";
+		if (c < '0' || c > '9') throw "Y'a des carctères qui sont pas des nombres";
 		donneeAccumulee = donneeAccumulee * 10 + (c - '0');
 		compteurAccumule++;
 		if (compteurAccumule == 3) {
@@ -48,8 +47,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 			compteurAccumule = 0;
 		}
 	}
-	if (compteurAccumule > 0)  // 1 or 2 digits remaining
-		bitTampon.ajouterBits(donneeAccumulee, compteurAccumule * 3 + 1);
+	if (compteurAccumule > 0) bitTampon.ajouterBits(donneeAccumulee, compteurAccumule * 3 + 1); // Il reste 1 ou 2 chiffres
 	return QAmiensRSegment(Mode::NUMERIQUE, compteurCaractere, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
 }
 
@@ -61,8 +59,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 	int compteurCaractere = 0;
 	for (; *texte != '\0'; texte++, compteurCaractere++) {
 		char c = *texte;
-		if (c < ' ' || c > 'Z')
-			throw "Y'a des caractères qui sont pas alphanumériques";
+		if (c < ' ' || c > 'Z') throw "Y'a des caractères qui sont pas alphanumériques";
 		donneeAccumulee = donneeAccumulee * 45 + TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '];
 		compteurAccumule++;
 		if (compteurAccumule == 2) {
@@ -71,8 +68,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 			compteurAccumule = 0;
 		}
 	}
-	if (compteurAccumule > 0)  // reste 1 caractère
-		bitTampon.ajouterBits(donneeAccumulee, 6);
+	if (compteurAccumule > 0) bitTampon.ajouterBits(donneeAccumulee, 6); // reste 1 caractère
 	return QAmiensRSegment(Mode::ALPHANUMERIQUE, compteurCaractere, bitTampon.obtenirOctets(), bitTampon.obtenirLongueurBit());
 }
 
@@ -81,14 +77,11 @@ std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAm
 	// Selectionne le mode d'encodage le plus optimisé
 	std::vector<QAmiensRSegment> result;
 	if (*texte == '\0');  // Laisse le vector vide
-	else if (QAmiensRSegment::estNumerique(texte))
-		result.push_back(QAmiensRSegment::faireNumerique(texte));
-	else if (QAmiensRSegment::estAlphanumerique(texte))
-		result.push_back(QAmiensRSegment::makeAlphanumeric(texte));
+	else if (QAmiensRSegment::estNumerique(texte)) result.push_back(QAmiensRSegment::faireNumerique(texte));
+	else if (QAmiensRSegment::estAlphanumerique(texte)) result.push_back(QAmiensRSegment::makeAlphanumeric(texte));
 	else {
 		std::vector<uint8_t> octets;
-		for (; *texte != '\0'; texte++)
-			octets.push_back((unsigned char &&) static_cast<uint8_t>(*texte));
+		for (; *texte != '\0'; texte++) octets.push_back((unsigned char &&) static_cast<uint8_t>(*texte));
 		result.push_back(QAmiensRSegment::faireOctet(octets));
 	}
 	return result;
@@ -100,21 +93,18 @@ QAmiensRCodeGeneration::QAmiensRSegment::QAmiensRSegment(const Mode &md, int num
 		numChars(numCh),
 		donnee(b),
 		bitLength(bitLen) {
-	if (numCh < 0 || bitLen < 0 || b.size() != static_cast<unsigned int>((bitLen + 7) / 8))
-		throw "Valeur invalide";
+	if (numCh < 0 || bitLen < 0 || b.size() != static_cast<unsigned int>((bitLen + 7) / 8)) throw "Valeur invalide";
 }
 
 
 int QAmiensRCodeGeneration::QAmiensRSegment::getTotalBits(const std::vector<QAmiensRSegment> &segs, int version) {
-	if (version < 1 || version > 40)
-		throw "Version non valide";
+	if (version < 1 || version > 40) throw "Version non valide";
 	int result = 0;
 	for (size_t i = 0; i < segs.size(); i++) {
 		const QAmiensRSegment &seg(segs.at(i));
 		int ccbits = seg.mode.indicNbBits(version);
 		// Échoue si la valeur de longueur de segment ne correspond pas à la largeur de bit du champ de longueur
-		if (seg.numChars >= (1 << ccbits))
-			return -1;
+		if (seg.numChars >= (1 << ccbits)) return -1;
 		result += 4 + ccbits + seg.bitLength;
 	}
 	return result;
@@ -124,8 +114,7 @@ int QAmiensRCodeGeneration::QAmiensRSegment::getTotalBits(const std::vector<QAmi
 bool QAmiensRCodeGeneration::QAmiensRSegment::estAlphanumerique(const char *texte) {
 	for (; *texte != '\0'; texte++) {
 		char c = *texte;
-		if (c < ' ' || c > 'Z' || TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '] == -1)
-			return false;
+		if (c < ' ' || c > 'Z' || TABLE_ENCODAGE_ALPHANUMERIQUE[c - ' '] == -1) return false;
 	}
 	return true;
 }
@@ -134,8 +123,7 @@ bool QAmiensRCodeGeneration::QAmiensRSegment::estAlphanumerique(const char *text
 bool QAmiensRCodeGeneration::QAmiensRSegment::estNumerique(const char *texte) {
 	for (; *texte != '\0'; texte++) {
 		char c = *texte;
-		if (c < '0' || c > '9')
-			return false;
+		if (c < '0' || c > '9') return false;
 	}
 	return true;
 }

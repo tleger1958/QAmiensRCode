@@ -494,8 +494,7 @@ const int8_t QAmiensRCodeGeneration::QAmiensRCode::NB_BLOCS_CORRECTION_ERREUR[4]
 
 QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolomon(int degre) :
 		coefficients() {
-	if (degre < 1 || degre > 255)
-		throw "Degré impossible";
+	if (degre < 1 || degre > 255) throw "Degré impossible";
 
 	// On commence avec le mononome x^0
 	coefficients.resize(degre);
@@ -509,8 +508,7 @@ QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolom
 		// Multiplie le produit actuel par (x - r^i)
 		for (size_t j = 0; j < coefficients.size(); j++) {
 			coefficients.at(j) = multiplier(coefficients.at(j), static_cast<uint8_t>(racine));
-			if (j + 1 < coefficients.size())
-				coefficients.at(j) ^= coefficients.at(j + 1);
+			if (j + 1 < coefficients.size()) coefficients.at(j) ^= coefficients.at(j + 1);
 		}
 		racine = (racine << 1) ^ ((racine >> 7) * 0x11D);  // Multiplie par 0x02 mod GF(2^8/0x11D)
 	}
@@ -524,8 +522,7 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon
 		uint8_t facteur = donnees.at(i) ^ resultat.at(0);
 		resultat.erase(resultat.begin());
 		resultat.push_back(0);
-		for (size_t j = 0; j < resultat.size(); j++)
-			resultat.at(j) ^= multiplier(coefficients.at(j), facteur);
+		for (size_t j = 0; j < resultat.size(); j++) resultat.at(j) ^= multiplier(coefficients.at(j), facteur);
 	}
 	return resultat;
 }
@@ -538,7 +535,6 @@ uint8_t QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::multiplier(
 		z = (z << 1) ^ ((z >> 7) * 0x11D);
 		z ^= ((y >> i) & 1) * x;
 	}
-	if (z >> 8 != 0)
-		throw "Erreur d'assertion";
+	if (z >> 8 != 0) throw "Erreur d'assertion";
 	return static_cast<uint8_t>(z);
 }
