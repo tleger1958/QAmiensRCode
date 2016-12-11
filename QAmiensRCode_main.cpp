@@ -6,25 +6,21 @@
 #include "QAmiensRCode.hpp"
 
 
-// Propototypes des fonctions
-static void creerQAmiensRCode();
-
 // La boucle principale du programme, exécutée la première.
 int main(int argc, char **argv) {
-    creerQAmiensRCode();
-    return 0;
-}
 
-// Création du QAmiensRCode
-static void creerQAmiensRCode() {
-    const char *text = "Thomas (car je suis pd) ! :o"; //Texte à encoder en QAmiensRCode
-    const QAmiensRCodeGeneration::QAmiensRCode::Ecc &errCorLvl = QAmiensRCodeGeneration::QAmiensRCode::Ecc::BAS;  // Niveau de correction d'erreur
+    std::string texteString;
+    std::cin >> texteString;    // On entre le texte qu'on veut convertir
+    const char *texte = texteString.c_str();    // On convertit la chaine de caractère en liste de caractères (et oui c'est important !)
+    const QAmiensRCodeGeneration::QAmiensRCode::Ecc &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::Ecc::BAS;  // Niveau de correction d'erreur
     // Création du QAmiensRCode et copiage des données SVG dans un fichier xml
-    const QAmiensRCodeGeneration::QAmiensRCode qr = QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(text, errCorLvl);
+    const QAmiensRCodeGeneration::QAmiensRCode qr = QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(texte, nivCorrErreur);
     std::fstream xml("QAmiensRCode.xml", std::ios::out | std::ios::trunc);
     if (xml) {
         xml << qr.toSvgString(4);
         xml.close();
     }
+
+    return 0;
 }
 
