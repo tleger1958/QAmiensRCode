@@ -242,50 +242,52 @@ private:
 
 
 
-	/*---- Private helper class ----*/
+	/*---- Classe membre privée ----*/
 private:
 
 	/*
-	 * Computes the Reed-Solomon error correction codewords for a sequence of data codewords
-	 * at a given degree. Objects are immutable, and the state only depends on the degree.
-	 * This class exists because the divisor polynomial does not need to be recalculated for every input.
+	 * Calcule les mots de code de correction d'erreur Reed-Solomon pour une séquence de
+	 * mots de code de données à un degré donné. Les objets sont immuables, et l'état ne dépend
+	 * que du degré. Cette classe existe parce que le polynôme du diviseur n'a pas besoin d'être recalculé pour chaque entrée.
 	 */
-	class ReedSolomonGenerator final {
+	class GenerateurReedSolomon final {
 
-		/*-- Immutable field --*/
+		/*-- Champ immuable --*/
 	private:
 
-		// Coefficients of the divisor polynomial, stored from highest to lowest power, excluding the leading term which
-		// is always 1. For example the polynomial x^3 + 255x^2 + 8x + 93 is stored as the uint8 array {255, 8, 93}.
+		// Coefficients du polynôme du diviseur, mémorisé de la puissance la plus élevée à la plus basse, à l'exclusion du premier terme qui est toujours 1.
+		// Par exemple, le polynôme x ^ 3 + 255x ^ 2 + 8x + 93 est stocké sous la forme uint8 {255, 8, 93} .
 		std::vector<uint8_t> coefficients;
 
 
-		/*-- Constructor --*/
+		/*-- Constructeur --*/
 	public:
 
 		/*
-		 * Creates a Reed-Solomon ECC generator for the given degree. This could be implemented
-		 * as a lookup table over all possible parameter values, instead of as an algorithm.
+		 * Crée un générateur d'ECC Reed-Solomon pour le degré donné.
+		 * Creates a Reed-Solomon ECC generator for the given degree. Cela pourrait être implémenté comme une table de
+		 * consultation sur toutes les valeurs de paramètres possibles, au lieu d'être un algorithme.
 		 */
-		ReedSolomonGenerator(int degree);
+		GenerateurReedSolomon(int degre);
 
 
-		/*-- Method --*/
+		/*-- Méthode --*/
 	public:
 
 		/*
-		 * Computes and returns the Reed-Solomon error correction codewords for the given sequence of data codewords.
-		 * The returned object is always a new byte array. This method does not alter this object's state (because it is immutable).
+		 * Calcule et renvoie l'ecc Reed-Solomon pour la séquence de données donnée.
+		 * L'objet retourné est toujours un nouveau tableau d'octets. Cette méthode ne change pas l'état de l'objet.
 		 */
-		std::vector<uint8_t> getRemainder(const std::vector<uint8_t> &data) const;
+		std::vector<uint8_t> getReste(const std::vector<uint8_t> &donnees) const;
 
 
-		/*-- Static function --*/
+		/*-- Fonction statique --*/
 	private:
 
-		// Returns the product of the two given field elements modulo GF(2^8/0x11D). The arguments and result
-		// are unsigned 8-bit integers. This could be implemented as a lookup table of 256*256 entries of uint8.
-		static uint8_t multiply(uint8_t x, uint8_t y);
+		// Renvoie le produit des deux éléments de champ donné modulo GF (2 ^ 8 / 0x11D).
+		// Les arguments et le résultat sont des entiers non signés de 8 bits.
+		// Cela pourrait être implémenté comme une table de consultation de 256 * 256 entrées de uint8.
+		static uint8_t multiplier(uint8_t x, uint8_t y);
 
 	};
 

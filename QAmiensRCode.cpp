@@ -263,12 +263,12 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::ajouterCorrectionErre
 
 	// Divise les données en blocs et ajoute l'erreur de correction à chaque bloc
 	std::vector<std::vector<uint8_t>> blocs;
-	const ReedSolomonGenerator rs(longBlocEcc);
+	const GenerateurReedSolomon rs(longBlocEcc);
 	for (int i = 0, k = 0; i < nbBlocs; i++) {
 		std::vector<uint8_t> donnees_;
 		donnees_.insert(donnees_.begin(), donnees.begin() + k, donnees.begin() + (k + longBlocCourt - longBlocEcc + (i < nbBlocCourt ? 0 : 1)));
 		k += donnees_.size();
-		const std::vector<uint8_t> ecc(rs.getRemainder(donnees_));
+		const std::vector<uint8_t> ecc(rs.getReste(donnees_));
 		if (i < nbBlocCourt) donnees_.push_back(0);
 		donnees_.insert(donnees_.end(), ecc.begin(), ecc.end());
 		blocs.push_back(donnees_);
@@ -492,47 +492,47 @@ const int8_t QAmiensRCodeGeneration::QAmiensRCode::NB_BLOCS_CORRECTION_ERREUR[4]
 };
 
 
-QAmiensRCodeGeneration::QAmiensRCode::ReedSolomonGenerator::ReedSolomonGenerator(int degree) :
+QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolomon(int degre) :
 		coefficients() {
-	if (degree < 1 || degree > 255)
-		throw "Degree out of range";
+	if (degre < 1 || degre > 255)
+		throw "Degré impossible";
 
-	// Start with the monomial x^0
-	coefficients.resize(degree);
-	coefficients.at(degree - 1) = 1;
+	// On commence avec le mononome x^0
+	coefficients.resize(degre);
+	coefficients.at(degre - 1) = 1;
 
-	// Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
-	// drop the highest term, and store the rest of the coefficients in order of descending powers.
-	// Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
-	int root = 1;
-	for (int i = 0; i < degree; i++) {
-		// Multiply the current product by (x - r^i)
+	// Calcule le produit polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degre-1}),
+	// dépose le plus grand terme et stocke le reste des coefficients dans l'ordre décroissant des puissances.
+	// On note que r = 0x02, ce qui est un générateur d'élément de ce champ GF(2^8/0x11D).
+	int racine = 1;
+	for (int i = 0; i < degre; i++) {
+		// Multiplie le produit actuel par (x - r^i)
 		for (size_t j = 0; j < coefficients.size(); j++) {
-			coefficients.at(j) = multiply(coefficients.at(j), static_cast<uint8_t>(root));
+			coefficients.at(j) = multiplier(coefficients.at(j), static_cast<uint8_t>(racine));
 			if (j + 1 < coefficients.size())
 				coefficients.at(j) ^= coefficients.at(j + 1);
 		}
-		root = (root << 1) ^ ((root >> 7) * 0x11D);  // Multiply by 0x02 mod GF(2^8/0x11D)
+		racine = (racine << 1) ^ ((racine >> 7) * 0x11D);  // Multiplie par 0x02 mod GF(2^8/0x11D)
 	}
 }
 
 
-std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::ReedSolomonGenerator::getRemainder(const std::vector<uint8_t> &data) const {
-	// Compute the remainder by performing polynomial division
+std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::getReste(const std::vector<uint8_t> &donnees) const {
+	// Calcule le reste avec une division polynomiale
 	std::vector<uint8_t> resultat(coefficients.size());
-	for (size_t i = 0; i < data.size(); i++) {
-		uint8_t factor = data.at(i) ^ resultat.at(0);
+	for (size_t i = 0; i < donnees.size(); i++) {
+		uint8_t facteur = donnees.at(i) ^ resultat.at(0);
 		resultat.erase(resultat.begin());
 		resultat.push_back(0);
 		for (size_t j = 0; j < resultat.size(); j++)
-			resultat.at(j) ^= multiply(coefficients.at(j), factor);
+			resultat.at(j) ^= multiplier(coefficients.at(j), facteur);
 	}
 	return resultat;
 }
 
 
-uint8_t QAmiensRCodeGeneration::QAmiensRCode::ReedSolomonGenerator::multiply(uint8_t x, uint8_t y) {
-	// Russian peasant multiplication
+uint8_t QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::multiplier(uint8_t x, uint8_t y) {
+	// Multiplication paysanne russe
 	int z = 0;
 	for (int i = 7; i >= 0; i--) {
 		z = (z << 1) ^ ((z >> 7) * 0x11D);
