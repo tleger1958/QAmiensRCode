@@ -143,33 +143,33 @@ public:
 
 
 
-	/*---- Méthodes d'aide privée pour le constructeur: modules de fonctions de dessin ----*/
+	/*---- Méthodes de dessin privées pour le constructeur ----*/
 private:
 
-	void drawFunctionPatterns();
+	void dessinerMotifsFonction();
 
 
-	// Draws two copies of the format bits (with its own error correction code)
-	// based on the given mask and this object's error correction level field.
-	void drawFormatBits(int masque);
+	// Dessine deux copies des bits de format (avec son propre code de correction d'erreur)
+    // basé sur le masque donné et sur le champ de correction d'erreur de cet objet.
+	void dessinerBitsFormat(int masque);
 
 
-	// Draws two copies of the version bits (with its own error correction code),
-	// based on this object's version field (which only has an effect for 7 <= version <= 40).
-	void drawVersion();
+	// Dessine deux copies des bits de version (avec son propre code de correction d'erreur),
+    // basé sur le champ de version de cet objet (ça s'utilise seulement pour les versions entre 7 et 40).
+	void dessinerVersion();
 
 
-	// Draws a 9*9 finder pattern including the border separator, with the center module at (x, y).
-	void drawFinderPattern(int x, int y);
+	// Dessine un motif de viseur de format 9*9, avec le séparateur de bordure compris, avec le module central en (x, y).
+	void dessinerMotifViseur(int x, int y);
 
 
-	// Draws a 5*5 alignment pattern, with the center module at (x, y).
-	void drawAlignmentPattern(int x, int y);
+	// Dessine un motif d'alignement de format 5*5, avec le module central en (x, y).
+	void dessinerMotifAlignement(int x, int y);
 
 
-	// Sets the color of a module and marks it as a function module.
-	// Only used by the constructor. Coordinates must be in range.
-	void setFunctionModule(int x, int y, bool isBlack);
+	// Définit la couleur d'un module et le marque comme un module de fonction.
+	// C'est utilisé uniquement par le constructeur.
+	void definirModuleFonction(int x, int y, bool estNoir);
 
 
 	/*---- Private helper methods for constructor: Codewords and masking ----*/
