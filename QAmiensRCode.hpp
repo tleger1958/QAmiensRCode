@@ -143,7 +143,7 @@ public:
 
 
 
-	/*---- Méthodes de dessin privées pour le constructeur ----*/
+	/*---- Méthodes de DESSIN privées pour le constructeur ----*/
 private:
 
 	void dessinerMotifsFonction();
@@ -172,70 +172,73 @@ private:
 	void definirModuleFonction(int x, int y, bool estNoir);
 
 
-	/*---- Private helper methods for constructor: Codewords and masking ----*/
+	/*---- Méthodes de MASQUAGE et de MOTS CODE privées pour le constructeur ----*/
 private:
 
-	// Returns a new byte string representing the given data with the appropriate error correction
-	// codewords appended to it, based on this object's version and error correction level.
-	std::vector<uint8_t> appendErrorCorrection(const std::vector<uint8_t> &data) const;
+	// Renvoie une nouvelle chaîne d'octets qui représente les données données (lol) avec les mots-clés de correction
+	// d'erreur appropriés qui y sont ajoutés, en fonction de la version de cet objet et du niveau de correction d'erreur.
+	std::vector<uint8_t> ajouterCorrectionErreur(const std::vector<uint8_t> &donnees) const;
 
 
-	// Draws the given sequence of 8-bit codewords (data and error correction) onto the entire
-	// data area of this QR Code symbol. Function modules need to be marked off before this is called.
-	void drawCodewords(const std::vector<uint8_t> &data);
+	// Dessine la séquence donnée de mots de code à 8 bits (données et correction d'erreurs) sur la zone de données entière
+	// du QAmiensRCode. Les modules de fonction doivent être marqués avant d'être appelés.
+	void dessinerMotsCles(const std::vector<uint8_t> &donnees);
 
 
-	// XORs the data modules in this QR Code with the given mask pattern. Due to XOR's mathematical
-	// properties, calling applyMask(m) twice with the same value is equivalent to no change at all.
-	// This means it is possible to apply a mask, undo it, and try another mask. Note that a final
-	// well-formed QR Code symbol needs exactly one mask applied (not zero, not two, etc.).
-	void applyMask(int masque);
+	// Fais un XOR sur les modules de données du QAmiensRCode avec le modèle de masque donné.
+	// Et à cause du XOR, appeler deux fois la fonction avec la même valeur ne change rien
+	// Du coup on peut appliquer un masque, de le défaire et en essayer un autre.
+	// Pour un QAmiensRCode bien formé on a besoin d'exactement un masque.
+	void appliquerMasque(int masque);
 
 
 	// A messy helper function for the constructors. This QR Code must be in an unmasked state when this
 	// method is called. The given argument is the requested mask, which is -1 for auto or 0 to 7 for fixed.
 	// This method applies and returns the actual mask chosen, from 0 to 7.
-	int handleConstructorMasking(int masque);
+
+	// C'est une fonction d'aide désordonnée pour les constructeurs. Le QAmiensRCode doit être non masqué lorsqu'on appelle cette méthode.
+	// L'argument donné c'est le masque demandé, c'est -1 pour auto ou entre 0 et 7 pour fixe. Cette méthode s'applique et renvoie le masque réel choisi, de 0 à 7.
+	int gererMasquageConstructeur(int masque);
 
 
-	// Calculates and returns the penalty score based on state of this QR Code's current modules.
-	// This is used by the automatic mask choice algorithm to find the mask pattern that yields the lowest score.
-	int getPenaltyScore() const;
+	// Calcule et retourne le score de pénalité en fonction de l'état des modules actuels du QAmiensRCode.
+	// C'est utilisé par l'algorithme de choix de masque automatique pour trouver le motif de masque qui donne le score le plus bas.
+	int getScorePenalite() const;
 
 
 
-	/*---- Private static helper functions ----*/
+	/*---- Fonctions statiques privées ----*/
 private:
 
-	// Returns a set of positions of the alignment patterns in ascending order. These positions are
-	// used on both the x and y axes. Each value in the resulting array is in the range [0, 177).
-	// This stateless pure function could be implemented as table of 40 variable-length lists of unsigned bytes.
-	static std::vector<int> getAlignmentPatternPositions(int ver);
+	// Renvoie un ensemble de positions des motifs d'alignement dans l'ordre croissant. Ces positions sont utilisées sur les axes x et y.
+	// Chaque valeur du tableau résultant est dans l'intervalle [0, 177]. Cette fonction pourrait être implémentée sous forme
+	// de tableau de 40 listes de longueur variable d'octets non signés.
+	static std::vector<int> getPosMotifAlignement(int version);
 
 
-	// Returns the number of raw data modules (bits) available at the given version number.
-	// These data modules are used for both user data codewords and error correction codewords.
-	// This stateless pure function could be implemented as a 40-entry lookup table.
-	static int getNumRawDataModules(int ver);
+	// Renvoie le nombre de modules de données brutes (bits) disponibles au numéro de version donné.
+	// Ces modules de données sont utilisés à la fois pour les mots de code de données d'utilisateur et les mots de code de correction d'erreur.
+	// Cette fonction pourrait être mise en œuvre en tant que table de consultation de 40 entrées.
+	static int getNbModulesDonnesBrutes(int version);
 
 
-	// Returns the number of 8-bit data (i.e. not error correction) codewords contained in any
-	// QR Code of the given version number and error correction level, with remainder bits discarded.
-	// This stateless pure function could be implemented as a (40*4)-cell lookup table.
-	static int getNumDataCodewords(int ver, const Ecc &nivCorrErreur);
+	// Renvoie le nombre de mots de code de 8 bits (càd sans correction d'erreur) contenus dans un QAmiensRCode du numéro de version
+	// et du niveau de correction d'erreur donnés, les bits de reste étant ignorés. Cette fonction pure apatride pourrait être implémentée
+	// sous la forme d'une table de recherche de cellules (40 * 4).
+	static int getNbMotsCode(int version, const Ecc &nivCorrErreur);
 
 
 	/*---- Private tables of constants ----*/
 private:
 
 	// For use in getPenaltyScore(), when evaluating which mask is best.
-	static const int PENALTY_N1;
-	static const int PENALTY_N2;
-	static const int PENALTY_N3;
-	static const int PENALTY_N4;
+	static const int PENALITE_N1;
+	static const int PENALITE_N2;
+	static const int PENALITE_N3;
+	static const int PENALITE_N4;
 
-	static const int16_t NUM_ERROR_CORRECTION_CODEWORDS[4][41];
-	static const int8_t NUM_ERROR_CORRECTION_BLOCKS[4][41];
+	static const int16_t NB_MOTSCODE_CORRECTION_ERREUR[4][41];
+	static const int8_t NB_BLOCS_CORRECTION_ERREUR[4][41];
 
 
 
