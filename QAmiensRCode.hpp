@@ -44,10 +44,10 @@ public:
 
 	/*
 	 * Renvoie un QAmiensRCode qui représente la chaîne de texte Unicode donnée, au niveau de correction d'erreur donné.
-	 * En tant que limite supérieure conservatrice, cette fonction est garantie pour réussir pour les chaînes qui ont 738 ou
+	 * En tant que limite supérieure conservatrice, cette fonction est garantie de réussite pour les chaînes qui ont 738 ou
 	 * moins de points de code Unicode (ça n'est pas unités de code UTF-16). La version de QAmiensRCode la plus petite
 	 * possible est automatiquement choisie pour la sortie.
-	 * Le niveau de correction d'erreurs du résultat peut être supérieur à l'argument 'nivCorrErreur' si cela peut être fait*
+	 * Le niveau de correction d'erreurs du résultat peut être supérieur à l'argument 'nivCorrErreur' si cela peut être fait
 	 * sans augmenter la version.
 	 */
 	static QAmiensRCode encoderTexte(const char *texte, const Ecc &nivCorrErreur);
@@ -55,8 +55,8 @@ public:
 
 	/*
      * Renvoie un QAmiensRCode qui représente la chaîne de données binaires donnée, au niveau de correction d'erreur donné.
-     * Cette fonction encode toujours en utilisant le mode de segment binaire, pas n'importe quel mode texte. Le nombre maximal de
-     * Les octets autorisés sont 2953. La version de code QR la plus petite possible est automatiquement choisie pour la sortie.
+     * Cette fonction encode toujours en utilisant le mode de segment binaire, pas n'importe quel mode texte. Le nombre maximal
+     * d'octets autorisés est 2953. La version de code QR la plus petite possible est automatiquement choisie pour la sortie.
      * Le niveau ECC du résultat peut être supérieur à l'argument nivCorrErreur si cela peut être fait sans augmenter la version.
 	 */
 	static QAmiensRCode encoderOctet(const std::vector<uint8_t> &donnee, const Ecc &nivCorrErreur);
@@ -66,7 +66,7 @@ public:
      * Renvoie un QAmiensRCode qui représente les segments de données spécifiés, avec les paramètres de codage spécifiés.
      * La version de code QR la plus petite possible dans la plage spécifiée est automatiquement choisie pour la sortie.
      * Cette fonction permet à l'utilisateur de créer une séquence personnalisée de segments qui commute
-     * Entre les modes (tels que alphanumérique et binaire) pour coder le texte plus efficacement.
+     * entre les modes (tels que alphanumérique et binaire) pour coder le texte plus efficacement.
      * Cette fonction est considérée comme étant un niveau plus bas que le simple encodage de texte ou de données binaires.
 	 */
 	static QAmiensRCode encoderSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &nivCorrErreur,
@@ -106,8 +106,8 @@ public:
 
 	/*
 	 * Crée un nouveau QAmiensRCode avec la version, le niveau de correction d'erreur, le tableau de données binaires,
-     * et numéro de masque. C'est un constructeur de faible niveau encombrant qu'on doit pas invoquer directement.
-     * Pour aller à un niveau plus haut, faut utiliser la fonction encodeSegments().
+     * et le numéro de masque. C'est un constructeur de faible niveau encombrant qu'on doit pas invoquer directement.
+     * Pour aller à un niveau plus haut, faut utiliser la fonction encodeSegments() (c'est trivial).
 	 */
 	QAmiensRCode(int ver, const Ecc &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque);
 
@@ -115,7 +115,7 @@ public:
 	/*
 	 * Crée un nouveau QAmiensRCode à partir d'un objet existant, mais avec un modèle de masque
      * potentiellement différent. La version, le niveau de correction d'erreur, les mots de code, etc.
-     * de l'objet créé sont tous identiques à l'objet argument; seul le masque peut différer.
+     * de l'objet créé sont tous identiques à l'objet argument ; seul le masque peut différer.
 	 */
 	QAmiensRCode(const QAmiensRCode &qr, int masque);
 
@@ -135,8 +135,8 @@ public:
 
 
 	/*
-	 * En fonction du nombre donné de modules de bordure à ajouter comme remplissage, cela renvoie un
-     * Chaîne dont le contenu représente un fichier XML SVG qui représente le QAmiensRCode.
+	 * En fonction du nombre donné de modules de bordure à ajouter comme remplissage, cela renvoie une
+     * chaîne dont le contenu représente un fichier XML encodant le QAmiensRCode en SVG.
      * Les saut de lignes style Unix (\n) sont toujours utilisées, sur tous les OS.
 	 */
 	std::string toSvgString(int bordure) const;
@@ -265,7 +265,7 @@ private:
 
 		/*
 		 * Crée un générateur d'ECC Reed-Solomon pour le degré donné.
-		 * Creates a Reed-Solomon ECC generator for the given degree. Cela pourrait être implémenté comme une table de
+		 * Cela pourrait être implémenté comme une table de
 		 * consultation sur toutes les valeurs de paramètres possibles, au lieu d'être un algorithme.
 		 */
 		GenerateurReedSolomon(int degre);
@@ -275,7 +275,7 @@ private:
 	public:
 
 		/*
-		 * Calcule et renvoie l'ecc Reed-Solomon pour la séquence de données donnée.
+		 * Calcule et renvoie l'ECC Reed-Solomon pour la séquence de données... donnée !
 		 * L'objet retourné est toujours un nouveau tableau d'octets. Cette méthode ne change pas l'état de l'objet.
 		 */
 		std::vector<uint8_t> getReste(const std::vector<uint8_t> &donnees) const;

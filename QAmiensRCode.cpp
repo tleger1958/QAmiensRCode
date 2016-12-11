@@ -529,7 +529,7 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon
 
 
 uint8_t QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::multiplier(uint8_t x, uint8_t y) {
-	// Multiplication paysanne russe
+	// Multiplication dite russe
 	int z = 0;
 	for (int i = 7; i >= 0; i--) {
 		z = (z << 1) ^ ((z >> 7) * 0x11D);

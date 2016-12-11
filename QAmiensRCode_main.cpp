@@ -10,6 +10,7 @@
 int main(int argc, char **argv) {
 
     std::string texteString;
+    std::cout << "Entrer le texte à encoder en QAmiensRCode : ";
     std::cin >> texteString;    // On entre le texte qu'on veut convertir
     const char *texte = texteString.c_str();    // On convertit la chaine de caractère en liste de caractères (et oui c'est important !)
     const QAmiensRCodeGeneration::QAmiensRCode::Ecc &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::Ecc::BAS;  // Niveau de correction d'erreur
