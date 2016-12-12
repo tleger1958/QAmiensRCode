@@ -156,7 +156,10 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"500\" height=\"500\" viewBox=\"0 0 50 50";
 	
 	sb << (taille + bordure * 2) << " " << (taille + bordure * 2) << "\">\n";
+	// Rectangle extérieur qui englobe le QAmiensRCode
 	sb << "\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\" stroke-width=\"0\"/>\n";
+	// Balise '<path>' qui dessine des tracés.
+	// C'est l'attribut 'd' qui indique les commandes (lignes, courbes, etc.) à effectuer pour dessiner le tracé. 
 	sb << "\t<path d=\"";
 	bool head = true;
 	for (int y = -bordure; y < taille + bordure; y++) {
@@ -164,7 +167,13 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const
 			if (getModule(x, y) == 1) {
 				if (head) head = false;
 				else sb << " ";
-				sb << "M" << (x + bordure) << "," << (y + bordure) << "h1v1h-1z";
+				// "M" (pour 'move to') : établit un nouveau point courant.
+				sb << "M" << (x + bordure) << "," << (y + bordure);
+				// La commande closepath 'z' trace une ligne du point courant vers le point spécifié
+				// avec la dernière commande 'M'.
+				// Les commandes 'h et 'v' sont utilisées pour dessiner des lignes horizontales (H)
+				// et verticales (V) seulement.
+				sb << "h1v1h-1z";
 			}
 		}
 	}
