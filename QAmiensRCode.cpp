@@ -171,8 +171,9 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const
 				sb << "M" << (x + bordure) << "," << (y + bordure);
 				// La commande closepath 'z' trace une ligne du point courant vers le point spécifié
 				// avec la dernière commande 'M'.
-				// Les commandes 'h et 'v' sont utilisées pour dessiner des lignes horizontales (H)
+				// Les commandes 'h' et 'v' sont utilisées pour dessiner des lignes horizontales (H)
 				// et verticales (V) seulement.
+				// On dessine 1 pixel en longueur et en hauteur.
 				sb << "h1v1h-1z";
 			}
 		}
