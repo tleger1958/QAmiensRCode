@@ -131,10 +131,34 @@ int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
 std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const {
 	if (bordure < 0) throw "La bordure ne peut pas être négative";
 	std::ostringstream sb;
-	sb << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ";
+	
+	/* 
+	* L'attribut standalone="no" indique que le document "ne se tient pas tout seul",
+	* il fait référence à des fichiers externes, entre autres une DTD.
+	* Une DTD est un fichier qui indique quelles balises ont le droit d'être utilisées, avec quels attributs, etc.
+	*/
+	sb << "<?xml version=\"1.0\" standalone="no" encoding=\"UTF-8\"?>\n"; 
+	
+	/*
+	* La DTD du SVG :
+	* 'xmlns', l'espace de nom du SVG (une page où trouver de l'information à son sujet) ;
+	* 'version', la version du langage (on utilise le SVG 1.1) ;
+	* 'width', la largeur du document (en pixels) à l'ouverture  ;
+	* 'height', la hauteur du document (en pixels) à l'ouverture.
+	* On crée donc ici un viewport de 500×500 unités, ce qui fait que chaque unité de l'élément SVG correspondra
+	* à une unité du viewport. On aura donc un élément SVG dont le système de coordonnée ira de 0 à 500 en largeur
+	* et de 0 à 200 en hauteur.
+	* En ajoutant une notion de 'viewbox', on transforme le système de coordonnées afin qu'il aille de 0 à w à
+	* l'horizontale et de 0 à h à la verticale. Ici, ce sera donc 500/50 (=10) en x ce qui équivaut à 10 unités d'élément
+	* SVG pour 1 unité du viewport.
+	*/
+	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"500\" height=\"500\" viewBox=\"0 0 50 50";
+	
 	sb << (taille + bordure * 2) << " " << (taille + bordure * 2) << "\">\n";
+	// Rectangle extérieur qui englobe le QAmiensRCode
 	sb << "\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\" stroke-width=\"0\"/>\n";
+	// Balise '<path>' qui dessine des tracés.
+	// C'est l'attribut 'd' qui indique les commandes (lignes, courbes, etc.) à effectuer pour dessiner le tracé. 
 	sb << "\t<path d=\"";
 	bool head = true;
 	for (int y = -bordure; y < taille + bordure; y++) {
@@ -142,7 +166,14 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const 
 			if (getModule(x, y) == 1) {
 				if (head) head = false;
 				else sb << " ";
-				sb << "M" << (x + bordure) << "," << (y + bordure) << "h1v1h-1z";
+				// "M" (pour 'move to') : établit un nouveau point courant.
+				sb << "M" << (x + bordure) << "," << (y + bordure);
+				// La commande closepath 'z' trace une ligne du point courant vers le point spécifié
+				// avec la dernière commande 'M'.
+				// Les commandes 'h' et 'v' sont utilisées pour dessiner des lignes horizontales (H)
+				// et verticales (V) seulement.
+				// On dessine 1 pixel en longueur et en hauteur.
+				sb << "h1v1h-1z";
 			}
 		}
 	}
@@ -186,7 +217,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifsFonction() {
 	dessinerMotifViseur(taille - 4, 3);
 	dessinerMotifViseur(3, taille - 4);
 
-	// Dessinez les nombreux motifs d'alignement
+	// Dessine les nombreux motifs d'alignement
 	const std::vector<int> posAlignementPattern(getPosMotifAlignement(version));
 	int numAlign = posAlignementPattern.size();
 	for (int i = 0; i < numAlign; i++) {
@@ -198,7 +229,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifsFonction() {
 		}
 	}
 
-	// Dessiner des données de configuration
+	// Dessine des données de configuration
 	dessinerBitsFormat(0);  // Valeur masque factice, écrasé plus tard dans le constructeur
 	dessinerVersion();
 }
