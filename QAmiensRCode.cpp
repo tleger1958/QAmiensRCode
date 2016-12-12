@@ -131,14 +131,14 @@ int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
 std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const {
 	if (bordure < 0) throw "La bordure ne peut pas être négative";
 	std::ostringstream sb;
-	
-	/* 
+
+	/*
 	* L'attribut standalone="no" indique que le document "ne se tient pas tout seul",
 	* il fait référence à des fichiers externes, entre autres une DTD.
 	* Une DTD est un fichier qui indique quelles balises ont le droit d'être utilisées, avec quels attributs, etc.
 	*/
-	sb << "<?xml version=\"1.0\" standalone="no" encoding=\"UTF-8\"?>\n"; 
-	
+	sb << "<?xml version=\"1.0\" standalone=\"no\" encoding=\"UTF-8\"?>\n";
+
 	/*
 	* La DTD du SVG :
 	* 'xmlns', l'espace de nom du SVG (une page où trouver de l'information à son sujet) ;
@@ -153,12 +153,12 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const 
 	* SVG pour 1 unité du viewport.
 	*/
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"500\" height=\"500\" viewBox=\"0 0 50 50";
-	
+
 	sb << (taille + bordure * 2) << " " << (taille + bordure * 2) << "\">\n";
 	// Rectangle extérieur qui englobe le QAmiensRCode
 	sb << "\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\" stroke-width=\"0\"/>\n";
 	// Balise '<path>' qui dessine des tracés.
-	// C'est l'attribut 'd' qui indique les commandes (lignes, courbes, etc.) à effectuer pour dessiner le tracé. 
+	// C'est l'attribut 'd' qui indique les commandes (lignes, courbes, etc.) à effectuer pour dessiner le tracé.
 	sb << "\t<path d=\"";
 	bool head = true;
 	for (int y = -bordure; y < taille + bordure; y++) {
@@ -200,8 +200,8 @@ sf::Texture QAmiensRCodeGeneration::QAmiensRCode::encoderSFML(int bordure) const
     return texture;
 }
 
-int QAmiensRCodeGeneration::QAmiensRCode::getEchelle(int bordure) {
-    return 500/(taille+2*bordure);
+float QAmiensRCodeGeneration::QAmiensRCode::getEchelle(int bordure) const {
+    return (float)500/(taille+2*bordure);
 }
 
 

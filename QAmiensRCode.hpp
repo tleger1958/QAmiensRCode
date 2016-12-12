@@ -151,7 +151,7 @@ public:
 	/*
 	 * Donne le scale pour changer la taille du QAmiensRCode pour qu'il soit bien grand.
      */
-    int getEchelle(int bordure);
+    float getEchelle(int bordure) const;
 
 	/*---- Méthodes de DESSIN privées pour le constructeur ----*/
 private:
