@@ -9,7 +9,7 @@ namespace QAmiensRCodeGeneration {
 /*
  * Représente une chaine de caractères qui doit être codée en QAmiensRCode.
  * Chaque segment a un mode et une séquence de caractères en bits.
- * Ici on a pas de restriction de longueur mais pour es vrais QR Codes il y en a.
+ * Ici on a pas de restriction de longueur mais pour es vrais qamiensrcode Codes il y en a.
  * On peut mettre au max 7 089 caractères, et si c'est plus long… tant pis on coupe !
  */
 

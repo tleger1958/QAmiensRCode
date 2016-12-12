@@ -1,37 +1,38 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include<iostream>
 #include <cstddef>
 #include <sstream>
 #include "BitTampon.hpp"
 #include "QAmiensRCode.hpp"
 
 
-QAmiensRCodeGeneration::QAmiensRCode::Ecc::Ecc(int ord, int fb) :
+QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::NivCorrErr(int ord, int fb) :
 	ordinal(ord),
 	formatBits(fb) {}
 
 
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::BAS          (0, 1);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::MOYEN        (1, 0);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::MOYEN_PLUS   (2, 3);
-const QAmiensRCodeGeneration::QAmiensRCode::Ecc QAmiensRCodeGeneration::QAmiensRCode::Ecc::HAUT         (3, 2);
+const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS          (0, 1);
+const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN        (1, 0);
+const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN_PLUS   (2, 3);
+const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::HAUT         (3, 2);
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(const char *texte, const Ecc &nivCorrErreur) {
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(const char *texte, const NivCorrErr &nivCorrErreur) {
 	std::vector<QAmiensRSegment> segs(QAmiensRSegment::makeSegments(texte));
 	return encoderSegments(segs, nivCorrErreur);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderOctet(const std::vector<uint8_t> &donnee, const Ecc &nivCorrErreur) {
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderOctet(const std::vector<uint8_t> &donnee, const NivCorrErr &nivCorrErreur) {
 	std::vector<QAmiensRSegment> segs;
 	segs.push_back(QAmiensRSegment::faireOctet(donnee));
 	return encoderSegments(segs, nivCorrErreur);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &nivCorrErreur,
+QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderSegments(const std::vector<QAmiensRSegment> &segs, const NivCorrErr &nivCorrErreur,
     int minVersion, int maxVersion, int masque, bool optimiserCorrection) {
 	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || masque < -1 || masque > 7) throw "Valeur invalide";
 
@@ -43,18 +44,17 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits) break;  // Cette vrsion est jugé appropriée
 		if (version >= maxVersion) throw "Trop de donnees"; // Toutes les versions de la gamme ne peuvent pas correspondre aux données... données ! :o
 	}
-	if (dataUsedBits == -1) throw "Erreur d'assertion";
 
 	// Augmenter le niveau de correction d'erreur mais laisser les données dans la version actuelle
-	const Ecc *newEcl = &nivCorrErreur;
+	const NivCorrErr *nouveauNivCorrErr = &nivCorrErreur;
 	if (optimiserCorrection) {
-		if (dataUsedBits <= getNbMotsCode(version, Ecc::MOYEN  ) * 8)  newEcl = &Ecc::MOYEN  ;
-		if (dataUsedBits <= getNbMotsCode(version, Ecc::MOYEN_PLUS) * 8)  newEcl = &Ecc::MOYEN_PLUS;
-		if (dataUsedBits <= getNbMotsCode(version, Ecc::HAUT    ) * 8)  newEcl = &Ecc::HAUT    ;
+		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::MOYEN  ) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN  ;
+		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::MOYEN_PLUS) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN_PLUS;
+		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::HAUT    ) * 8)  nouveauNivCorrErr = &NivCorrErr::HAUT    ;
 	}
 
 	// Créez la chaîne de bits de données en concaténant tous les segments
-	int dataCapacityBits = getNbMotsCode(version, *newEcl) * 8;
+	int dataCapacityBits = getNbMotsCode(version, *nouveauNivCorrErr) * 8;
 	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
 		const QAmiensRSegment &seg(segs.at(i));
@@ -69,14 +69,13 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 
 	// 'Pad' avec des octets de remplacement jusqu'à ce que la capacité de données soit atteinte
 	for (uint8_t padByte = 0xEC; bitTampon.obtenirLongueurBit() < dataCapacityBits; padByte ^= 0xEC ^ 0x11) bitTampon.ajouterBits(padByte, 8);
-	if (bitTampon.obtenirLongueurBit() % 8 != 0) throw "Erreur d'assertion";
 
 	// Création du symbole du QAmiensRCode
-	return QAmiensRCode(version, *newEcl, bitTampon.obtenirOctets(), masque);
+	return QAmiensRCode(version, *nouveauNivCorrErr, bitTampon.obtenirOctets(), masque);
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque) :
+QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const NivCorrErr &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque) :
     // Initialise les champs scalaires
     version(ver),
     taille(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Évite le dépassement de signature non défini
@@ -99,21 +98,21 @@ QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const Ecc &nivCorrEr
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qr, int masque) :
+QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qamiensrcode, int masque) :
 		// Copie des champs scalaires
-		version(qr.version),
-		taille(qr.taille),
-		niveauCorrectionErreur(qr.niveauCorrectionErreur) {
+		version(qamiensrcode.version),
+		taille(qamiensrcode.taille),
+		niveauCorrectionErreur(qamiensrcode.niveauCorrectionErreur) {
 
 	// Vérfication des arguments
 	if (masque < -1 || masque > 7) throw "Valeur du masque en dehors de la plage autorisée";
 
 	// Handle grid fields
-	modules = qr.modules;
-	estFonction = qr.estFonction;
+	modules = qamiensrcode.modules;
+	estFonction = qamiensrcode.estFonction;
 
 	// Masquage de l'indicateur
-	appliquerMasque(qr.masque);  // Enlever l'ancien masque
+	appliquerMasque(qamiensrcode.masque);  // Enlever l'ancien masque
 	this->masque = gererMasquageConstructeur(masque);
 }
 
@@ -129,8 +128,8 @@ int QAmiensRCodeGeneration::QAmiensRCode::getModule(int x, int y) const {
 }
 
 
-std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const {
-	if (bordure < 0) throw "La bordure ne peut pas être négative, tu codes comme un noob !";
+std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const {
+	if (bordure < 0) throw "La bordure ne peut pas être négative";
 	std::ostringstream sb;
 	sb << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	sb << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ";
@@ -150,6 +149,28 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::toSvgString(int bordure) const
 	sb << "\" fill=\"#000000\" stroke-width=\"0\"/>\n";
 	sb << "</svg>\n";
 	return sb.str();
+}
+
+sf::Texture QAmiensRCodeGeneration::QAmiensRCode::encoderSFML(int bordure) const {
+	if (bordure < 0) throw "La bordure ne peut pas être négative";
+    sf::Image image;
+    image.create(taille + 2 * bordure, taille + 2 * bordure, sf::Color::White);
+
+	for (int y = 0; y < taille + 2 * bordure; y++) {
+		for (int x = 0; x < taille + 2 * bordure; x++) {
+			if (getModule(x, y) == 1) {
+                image.setPixel(x + bordure, y + bordure, sf::Color::Black);
+			}
+		}
+	}
+
+    sf::Texture texture;
+    texture.loadFromImage(image, sf::IntRect(0, 0, taille + 2 * bordure, taille + 2 * bordure));
+    return texture;
+}
+
+int QAmiensRCodeGeneration::QAmiensRCode::getEchelle(int bordure) {
+    return 500/(taille+2*bordure);
 }
 
 
@@ -190,7 +211,6 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerBitsFormat(int masque) {
 	for (int i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >> 9) * 0x537);
 	donnees = donnees << 10 | rem;
 	donnees ^= 0x5412;  // uint15
-	if (donnees >> 15 != 0) throw "Erreur d'assertion";
 
 	// Dessine la première copie
 	for (int i = 0; i <= 5; i++) definirModuleFonction(8, i, ((donnees >> i) & 1) != 0);
@@ -214,7 +234,6 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerVersion() {
 	int rem = version;  // version c'est uint6, entre 7 et 40
 	for (int i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >> 11) * 0x1F25);
 	int data = version << 12 | rem;  // uint18
-	if (data >> 18 != 0) throw "Erreur d'assertion";
 
 	// Dessine les deux copies
 	for (int i = 0; i < 18; i++) {
@@ -255,35 +274,33 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::ajouterCorrectionErre
 
 	// Calcule les numéros de paramètre
 	int nbBlocs = NB_BLOCS_CORRECTION_ERREUR[niveauCorrectionErreur.ordinal][version];
-	int totalEcc = NB_MOTSCODE_CORRECTION_ERREUR[niveauCorrectionErreur.ordinal][version];
-	if (totalEcc % nbBlocs != 0) throw "Erreur d'assertion";
-	int longBlocEcc = totalEcc / nbBlocs;
+	int totalNivCorrErr = NB_MOTSCODE_CORRECTION_ERREUR[niveauCorrectionErreur.ordinal][version];
+	int longBlocNivCorrErr = totalNivCorrErr / nbBlocs;
 	int nbBlocCourt = nbBlocs - getNbModulesDonnesBrutes(version) / 8 % nbBlocs;
 	int longBlocCourt = getNbModulesDonnesBrutes(version) / 8 / nbBlocs;
 
 	// Divise les données en blocs et ajoute l'erreur de correction à chaque bloc
 	std::vector<std::vector<uint8_t>> blocs;
-	const GenerateurReedSolomon rs(longBlocEcc);
+	const GenerateurReedSolomon rs(longBlocNivCorrErr);
 	for (int i = 0, k = 0; i < nbBlocs; i++) {
 		std::vector<uint8_t> donnees_;
-		donnees_.insert(donnees_.begin(), donnees.begin() + k, donnees.begin() + (k + longBlocCourt - longBlocEcc + (i < nbBlocCourt ? 0 : 1)));
+		donnees_.insert(donnees_.begin(), donnees.begin() + k, donnees.begin() + (k + longBlocCourt - longBlocNivCorrErr + (i < nbBlocCourt ? 0 : 1)));
 		k += donnees_.size();
-		const std::vector<uint8_t> ecc(rs.getReste(donnees_));
+		const std::vector<uint8_t> NivCorrErr(rs.getReste(donnees_));
 		if (i < nbBlocCourt) donnees_.push_back(0);
-		donnees_.insert(donnees_.end(), ecc.begin(), ecc.end());
+		donnees_.insert(donnees_.end(), NivCorrErr.begin(), NivCorrErr.end());
 		blocs.push_back(donnees_);
 	}
 
 	// Intercale (sans concaténer) les octets de chaque bloc en une seule séquence
-	std::vector<uint8_t> resultatat;
+	std::vector<uint8_t> resultat;
 	for (int i = 0; static_cast<unsigned int>(i) < blocs.at(0).size(); i++) {
 		for (int j = 0; static_cast<unsigned int>(j) < blocs.size(); j++) {
 			// Ignore l'octet de remplissage dans les blocs courts
-			if (i != longBlocCourt - longBlocEcc || j >= nbBlocCourt) resultatat.push_back((unsigned char &&) blocs.at(j).at(i));
+			if (i != longBlocCourt - longBlocNivCorrErr || j >= nbBlocCourt) resultat.push_back((unsigned char &&) blocs.at(j).at(i));
 		}
 	}
-	if (resultatat.size() != static_cast<unsigned int>(getNbModulesDonnesBrutes(version) / 8)) throw "Erreur d'assertion";
-	return resultatat;
+	return resultat;
 }
 
 
@@ -308,8 +325,6 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotsCles(const std::vector<ui
 			}
 		}
 	}
-	if (static_cast<unsigned int>(i) != donnees.size() * 8)
-		throw "Erreur d'assertion";
 }
 
 
@@ -349,7 +364,6 @@ int QAmiensRCodeGeneration::QAmiensRCode::gererMasquageConstructeur(int masque) 
 			appliquerMasque(i);  // Défait le masque grâce au XOR
 		}
 	}
-	if (masque < 0 || masque > 7) throw "Erreur d'assertion";
 	dessinerBitsFormat(masque);  // Écraser les anciens format de bits
 	appliquerMasque(masque);  // Applique le choix de masque final
 	return masque;  // L'appelant doit assigner cette valeur au champ déclaré final
@@ -459,7 +473,7 @@ int QAmiensRCodeGeneration::QAmiensRCode::getNbModulesDonnesBrutes(int version) 
 }
 
 
-int QAmiensRCodeGeneration::QAmiensRCode::getNbMotsCode(int version, const Ecc &nivCorrErreur) {
+int QAmiensRCodeGeneration::QAmiensRCode::getNbMotsCode(int version, const NivCorrErr &nivCorrErreur) {
 	if (version < 1 || version > 40) throw "Version impossible";
 	return getNbModulesDonnesBrutes(version) / 8 - NB_MOTSCODE_CORRECTION_ERREUR[nivCorrErreur.ordinal][version];
 }
@@ -507,7 +521,7 @@ QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolom
 	for (int i = 0; i < degre; i++) {
 		// Multiplie le produit actuel par (x - r^i)
 		for (size_t j = 0; j < coefficients.size(); j++) {
-			coefficients.at(j) = multiplier(coefficients.at(j), static_cast<uint8_t>(racine));
+			coefficients.at(j) = multiplierCommeUnCommuniste(coefficients.at(j), static_cast<uint8_t>(racine));
 			if (j + 1 < coefficients.size()) coefficients.at(j) ^= coefficients.at(j + 1);
 		}
 		racine = (racine << 1) ^ ((racine >> 7) * 0x11D);  // Multiplie par 0x02 mod GF(2^8/0x11D)
@@ -522,19 +536,18 @@ std::vector<uint8_t> QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon
 		uint8_t facteur = donnees.at(i) ^ resultat.at(0);
 		resultat.erase(resultat.begin());
 		resultat.push_back(0);
-		for (size_t j = 0; j < resultat.size(); j++) resultat.at(j) ^= multiplier(coefficients.at(j), facteur);
+		for (size_t j = 0; j < resultat.size(); j++) resultat.at(j) ^= multiplierCommeUnCommuniste(coefficients.at(j), facteur);
 	}
 	return resultat;
 }
 
 
-uint8_t QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::multiplier(uint8_t x, uint8_t y) {
+uint8_t QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::multiplierCommeUnCommuniste(uint8_t x, uint8_t y) {
 	// Multiplication dite russe
 	int z = 0;
 	for (int i = 7; i >= 0; i--) {
 		z = (z << 1) ^ ((z >> 7) * 0x11D);
 		z ^= ((y >> i) & 1) * x;
 	}
-	if (z >> 8 != 0) throw "Erreur d'assertion";
 	return static_cast<uint8_t>(z);
 }

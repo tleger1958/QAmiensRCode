@@ -5,6 +5,8 @@
 #include <vector>
 #include "QAmiensRSegment.hpp"
 
+#include <SFML/Graphics.hpp>
+
 
 namespace QAmiensRCodeGeneration {
 
@@ -23,10 +25,10 @@ public:
 	/*
 	 * Représente le niveau de correction d'erreur utilisé dans un symbole de QAmiensRCode.
 	 */
-	class Ecc final {
+	class NivCorrErr final {
 		// Constantes déclarées par ordre croissant de protection contre les erreurs.
 	public:
-		const static Ecc BAS, MOYEN, MOYEN_PLUS, HAUT;
+		const static NivCorrErr BAS, MOYEN, MOYEN_PLUS, HAUT;
 
 	public:
 		const int ordinal;  // (Public) Dans la plage 0 à 3 (entier non signé de 2 bits).
@@ -34,7 +36,7 @@ public:
 
 		// Constructeur.
 	private:
-		Ecc(int ord, int fb);
+		NivCorrErr(int ord, int fb);
 	};
 
 
@@ -50,27 +52,27 @@ public:
 	 * Le niveau de correction d'erreurs du résultat peut être supérieur à l'argument 'nivCorrErreur' si cela peut être fait
 	 * sans augmenter la version.
 	 */
-	static QAmiensRCode encoderTexte(const char *texte, const Ecc &nivCorrErreur);
+	static QAmiensRCode encoderTexte(const char *texte, const NivCorrErr &nivCorrErreur);
 
 
 	/*
      * Renvoie un QAmiensRCode qui représente la chaîne de données binaires donnée, au niveau de correction d'erreur donné.
      * Cette fonction encode toujours en utilisant le mode de segment binaire, pas n'importe quel mode texte. Le nombre maximal
-     * d'octets autorisés est 2953. La version de code QR la plus petite possible est automatiquement choisie pour la sortie.
-     * Le niveau ECC du résultat peut être supérieur à l'argument nivCorrErreur si cela peut être fait sans augmenter la version.
+     * d'octets autorisés est 2953. La version de code qamiensrcode la plus petite possible est automatiquement choisie pour la sortie.
+     * Le niveau NivCorrErr du résultat peut être supérieur à l'argument nivCorrErreur si cela peut être fait sans augmenter la version.
 	 */
-	static QAmiensRCode encoderOctet(const std::vector<uint8_t> &donnee, const Ecc &nivCorrErreur);
+	static QAmiensRCode encoderOctet(const std::vector<uint8_t> &donnee, const NivCorrErr &nivCorrErreur);
 
 
 	/*
      * Renvoie un QAmiensRCode qui représente les segments de données spécifiés, avec les paramètres de codage spécifiés.
-     * La version de code QR la plus petite possible dans la plage spécifiée est automatiquement choisie pour la sortie.
+     * La version de code qamiensrcode la plus petite possible dans la plage spécifiée est automatiquement choisie pour la sortie.
      * Cette fonction permet à l'utilisateur de créer une séquence personnalisée de segments qui commute
      * entre les modes (tels que alphanumérique et binaire) pour coder le texte plus efficacement.
      * Cette fonction est considérée comme étant un niveau plus bas que le simple encodage de texte ou de données binaires.
 	 */
-	static QAmiensRCode encoderSegments(const std::vector<QAmiensRSegment> &segs, const Ecc &nivCorrErreur,
-		int minVersion=1, int maxVersion=40, int mask=-1, bool optimiserCorrection=true);  // Des paramètres optionnels
+	static QAmiensRCode encoderSegments(const std::vector<QAmiensRSegment> &segs, const NivCorrErr &nivCorrErreur,
+		int minVersion=1, int maxVersion=40, int masque=-1, bool optimiserCorrection=true);  // Des paramètres optionnels
 
 
 
@@ -86,7 +88,7 @@ public:
 	const int taille;
 
 	// Niveau de correction utilisé
-	const Ecc &niveauCorrectionErreur;
+	const NivCorrErr &niveauCorrectionErreur;
 
     /* Modèle de masque utilisé dans ce QAmiensRCode, compris entre 0 et 7 (càd un entier de 3 bits non signé).
      * Et même si un constructeur a été appelé avec masquage automatique (Masque = -1),
@@ -109,7 +111,7 @@ public:
      * et le numéro de masque. C'est un constructeur de faible niveau encombrant qu'on doit pas invoquer directement.
      * Pour aller à un niveau plus haut, faut utiliser la fonction encodeSegments() (c'est trivial).
 	 */
-	QAmiensRCode(int ver, const Ecc &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque);
+	QAmiensRCode(int ver, const NivCorrErr &nivCorrErreur, const std::vector<uint8_t> &MotscodeDonnees, int masque);
 
 
 	/*
@@ -117,7 +119,7 @@ public:
      * potentiellement différent. La version, le niveau de correction d'erreur, les mots de code, etc.
      * de l'objet créé sont tous identiques à l'objet argument ; seul le masque peut différer.
 	 */
-	QAmiensRCode(const QAmiensRCode &qr, int masque);
+	QAmiensRCode(const QAmiensRCode &qamiensrcode, int masque);
 
 
 
@@ -139,9 +141,17 @@ public:
      * chaîne dont le contenu représente un fichier XML encodant le QAmiensRCode en SVG.
      * Les saut de lignes style Unix (\n) sont toujours utilisées, sur tous les OS.
 	 */
-	std::string toSvgString(int bordure) const;
+	std::string encoderSVG(int bordure) const;
 
+	/*
+	 * Renvoie une texture SFML qui conient le QAmiensRCode. Crée un tableau avec tous les pixels et les met dans une texture.
+	 */
+	sf::Texture encoderSFML(int bordure) const;
 
+	/*
+	 * Donne le scale pour changer la taille du QAmiensRCode pour qu'il soit bien grand.
+     */
+    int getEchelle(int bordure);
 
 	/*---- Méthodes de DESSIN privées pour le constructeur ----*/
 private:
@@ -192,7 +202,7 @@ private:
 	void appliquerMasque(int masque);
 
 
-	// A messy helper function for the constructors. This QR Code must be in an unmasked state when this
+	// A messy helper function for the constructors. This qamiensrcode Code must be in an unmasked state when this
 	// method is called. The given argument is the requested mask, which is -1 for auto or 0 to 7 for fixed.
 	// This method applies and returns the actual mask chosen, from 0 to 7.
 
@@ -225,7 +235,7 @@ private:
 	// Renvoie le nombre de mots de code de 8 bits (càd sans correction d'erreur) contenus dans un QAmiensRCode du numéro de version
 	// et du niveau de correction d'erreur donnés, les bits de reste étant ignorés. Cette fonction pure apatride pourrait être implémentée
 	// sous la forme d'une table de recherche de cellules (40 * 4).
-	static int getNbMotsCode(int version, const Ecc &nivCorrErreur);
+	static int getNbMotsCode(int version, const NivCorrErr &nivCorrErreur);
 
 
 	/*---- Private tables of constants ----*/
@@ -264,7 +274,7 @@ private:
 	public:
 
 		/*
-		 * Crée un générateur d'ECC Reed-Solomon pour le degré donné.
+		 * Crée un générateur d'NivCorrErr Reed-Solomon pour le degré donné.
 		 * Cela pourrait être implémenté comme une table de
 		 * consultation sur toutes les valeurs de paramètres possibles, au lieu d'être un algorithme.
 		 */
@@ -275,7 +285,7 @@ private:
 	public:
 
 		/*
-		 * Calcule et renvoie l'ECC Reed-Solomon pour la séquence de données... donnée !
+		 * Calcule et renvoie l'NivCorrErr Reed-Solomon pour la séquence de données... donnée !
 		 * L'objet retourné est toujours un nouveau tableau d'octets. Cette méthode ne change pas l'état de l'objet.
 		 */
 		std::vector<uint8_t> getReste(const std::vector<uint8_t> &donnees) const;
@@ -287,7 +297,7 @@ private:
 		// Renvoie le produit des deux éléments de champ donné modulo GF (2 ^ 8 / 0x11D).
 		// Les arguments et le résultat sont des entiers non signés de 8 bits.
 		// Cela pourrait être implémenté comme une table de consultation de 256 * 256 entrées de uint8.
-		static uint8_t multiplier(uint8_t x, uint8_t y);
+		static uint8_t multiplierCommeUnCommuniste(uint8_t x, uint8_t y);
 
 	};
 
