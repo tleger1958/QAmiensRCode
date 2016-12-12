@@ -186,7 +186,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifsFonction() {
 	dessinerMotifViseur(taille - 4, 3);
 	dessinerMotifViseur(3, taille - 4);
 
-	// Dessinez les nombreux motifs d'alignement
+	// Dessine les nombreux motifs d'alignement
 	const std::vector<int> posAlignementPattern(getPosMotifAlignement(version));
 	int numAlign = posAlignementPattern.size();
 	for (int i = 0; i < numAlign; i++) {
@@ -198,7 +198,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifsFonction() {
 		}
 	}
 
-	// Dessiner des données de configuration
+	// Dessine des données de configuration
 	dessinerBitsFormat(0);  // Valeur masque factice, écrasé plus tard dans le constructeur
 	dessinerVersion();
 }
