@@ -10,9 +10,8 @@ CE N'EST PAS UN MOTEUR !
 #include <string>
 #include <vector>
 #include <fstream>
-#include "QAmiensRCode.hpp"
-
 #include <SFML/Graphics.hpp>
+#include "QAmiensRCode.hpp"
 
 // La boucle principale du programme, exécutée la première.
 int main(int argc, char **argv) {
