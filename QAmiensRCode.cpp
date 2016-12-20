@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
-#include<iostream>
+#include <iostream>
 #include <cstddef>
 #include <sstream>
 #include "BitTampon.hpp"
@@ -20,7 +20,7 @@ const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr QAmiensRCodeGeneration::Q
 
 
 QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(const char *texte, const NivCorrErr &nivCorrErreur) {
-	std::vector<QAmiensRSegment> segs(QAmiensRSegment::makeSegments(texte));
+	std::vector<QAmiensRSegment> segs(QAmiensRSegment::faireSegments(texte));
 	return encoderSegments(segs, nivCorrErreur);
 }
 
@@ -37,23 +37,23 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 	if (!(1 <= minVersion && minVersion <= maxVersion && maxVersion <= 40) || masque < -1 || masque > 7) throw "Valeur invalide";
 
 	// Détermination de la plus petite version à utiliser
-	int version, dataUsedBits;
+	int version, donnees_bits_utilises;
 	for (version = minVersion; ; version++) {
-		int dataCapacityBits = getNbMotsCode(version, nivCorrErreur) * 8;  // Nombre de bits nécessaire
-		dataUsedBits = QAmiensRSegment::getTotalBits(segs, version);
-		if (dataUsedBits != -1 && dataUsedBits <= dataCapacityBits) break;  // Cette vrsion est jugé appropriée
-		if (version >= maxVersion) throw "Trop de donnees"; // Toutes les versions de la gamme ne peuvent pas correspondre aux données... données ! :o
+		int capacite_donnees_bits = getNbMotsCode(version, nivCorrErreur) * 8;  // Nombre de bits nécessaire
+		donnees_bits_utilises = QAmiensRSegment::getTotalBits(segs, version);
+		if (donnees_bits_utilises != -1 && donnees_bits_utilises <= capacite_donnees_bits) break;  // Cette version est jugé appropriée
+		if (version >= maxVersion) throw "Trop de donnees"; // Toutes les versions de la gamme ne peuvent pas correspondre aux données... données ! ^^
 	}
 
-	// Augmenter le niveau de correction d'erreur mais laisser les données dans la version actuelle
+	// Augmente le niveau de correction d'erreur mais laisse les données dans la version actuelle
 	const NivCorrErr *nouveauNivCorrErr = &nivCorrErreur;
 	if (optimiserCorrection) {
-		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::MOYEN  ) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN  ;
-		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::MOYEN_PLUS) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN_PLUS;
-		if (dataUsedBits <= getNbMotsCode(version, NivCorrErr::HAUT    ) * 8)  nouveauNivCorrErr = &NivCorrErr::HAUT    ;
+		if (donnees_bits_utilises <= getNbMotsCode(version, NivCorrErr::MOYEN  ) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN  ;
+		if (donnees_bits_utilises <= getNbMotsCode(version, NivCorrErr::MOYEN_PLUS) * 8)  nouveauNivCorrErr = &NivCorrErr::MOYEN_PLUS;
+		if (donnees_bits_utilises <= getNbMotsCode(version, NivCorrErr::HAUT    ) * 8)  nouveauNivCorrErr = &NivCorrErr::HAUT    ;
 	}
 
-	// Créez la chaîne de bits de données en concaténant tous les segments
+	// Crée la chaîne de bits de données en concaténant tous les segments
 	int dataCapacityBits = getNbMotsCode(version, *nouveauNivCorrErr) * 8;
 	BitTampon bitTampon;
 	for (size_t i = 0; i < segs.size(); i++) {
@@ -75,7 +75,7 @@ QAmiensRCodeGeneration::QAmiensRCode QAmiensRCodeGeneration::QAmiensRCode::encod
 }
 
 
-QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const NivCorrErr &nivCorrErreur, const std::vector<uint8_t> &dataCodewords, int masque) :
+QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const NivCorrErr &nivCorrErreur, const std::vector<uint8_t> &donnees_mots_de_code, int masque) :
     // Initialise les champs scalaires
     version(ver),
     taille(1 <= ver && ver <= 40 ? ver * 4 + 17 : -1),  // Évite le dépassement de signature non défini
@@ -92,22 +92,22 @@ QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(int ver, const NivCorrErr &ni
 
 	// Dessine des motifs de fonction, les mots code et applique le masque
 	dessinerMotifsFonction();
-	const std::vector<uint8_t> allCodewords(ajouterCorrectionErreur(dataCodewords));
+	const std::vector<uint8_t> allCodewords(ajouterCorrectionErreur(donnees_mots_de_code));
 	dessinerMotsCles(allCodewords);
 	this->masque = gererMasquageConstructeur(masque);
 }
 
 
 QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qamiensrcode, int masque) :
-		// Copie des champs scalaires
-		version(qamiensrcode.version),
-		taille(qamiensrcode.taille),
-		niveauCorrectionErreur(qamiensrcode.niveauCorrectionErreur) {
+    // Copie des champs scalaires
+	version(qamiensrcode.version),
+	taille(qamiensrcode.taille),
+	niveauCorrectionErreur(qamiensrcode.niveauCorrectionErreur) {
 
 	// Vérfication des arguments
 	if (masque < -1 || masque > 7) throw "Valeur du masque en dehors de la plage autorisée";
 
-	// Handle grid fields
+    // Traite les champs de la grille
 	modules = qamiensrcode.modules;
 	estFonction = qamiensrcode.estFonction;
 
@@ -154,11 +154,11 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const 
 	// Balise '<path>' qui dessine des tracés.
 	// C'est l'attribut 'd' qui indique les commandes (lignes, courbes, etc.) à effectuer pour dessiner le tracé.
 	sb << "\t<path d=\"";
-	bool head = true;
+	bool en_tete = true;
 	for (int y = -bordure; y < taille + bordure; y++) {
 		for (int x = -bordure; x < taille + bordure; x++) {
 			if (getModule(x, y) == 1) {
-				if (head) head = false;
+				if (en_tete) en_tete = false;
 				else sb << " ";
 				// "M" (pour 'move to') : établit un nouveau point courant.
 				sb << "M" << (x + bordure) << "," << (y + bordure);

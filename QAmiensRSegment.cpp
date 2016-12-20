@@ -52,7 +52,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 }
 
 
-QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment::makeAlphanumeric(const char *texte) {
+QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment::faireAlphanumerique(const char *texte) {
 	BitTampon bitTampon;
 	int donneeAccumulee = 0;
 	int compteurAccumule = 0;
@@ -73,12 +73,12 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 }
 
 
-std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAmiensRSegment::makeSegments(const char *texte) {
+std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAmiensRSegment::faireSegments(const char *texte) {
 	// Selectionne le mode d'encodage le plus optimisé
 	std::vector<QAmiensRSegment> result;
 	if (*texte == '\0');  // Laisse le vector vide
 	else if (QAmiensRSegment::estNumerique(texte)) result.push_back(QAmiensRSegment::faireNumerique(texte));
-	else if (QAmiensRSegment::estAlphanumerique(texte)) result.push_back(QAmiensRSegment::makeAlphanumeric(texte));
+	else if (QAmiensRSegment::estAlphanumerique(texte)) result.push_back(QAmiensRSegment::faireAlphanumerique(texte));
 	else {
 		std::vector<uint8_t> octets;
 		for (; *texte != '\0'; texte++) octets.push_back((unsigned char &&) static_cast<uint8_t>(*texte));
@@ -110,7 +110,7 @@ int QAmiensRCodeGeneration::QAmiensRSegment::getTotalBits(const std::vector<QAmi
 	return result;
 }
 
-
+//Teste si on peut encoder le texte en Alphanumérique
 bool QAmiensRCodeGeneration::QAmiensRSegment::estAlphanumerique(const char *texte) {
 	for (; *texte != '\0'; texte++) {
 		char c = *texte;
@@ -119,7 +119,7 @@ bool QAmiensRCodeGeneration::QAmiensRSegment::estAlphanumerique(const char *text
 	return true;
 }
 
-
+//Teste si on peut encoder le texte en Numérique
 bool QAmiensRCodeGeneration::QAmiensRSegment::estNumerique(const char *texte) {
 	for (; *texte != '\0'; texte++) {
 		char c = *texte;
@@ -134,4 +134,4 @@ const int8_t QAmiensRCodeGeneration::QAmiensRSegment::TABLE_ENCODAGE_ALPHANUMERI
 	   36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1, -1,  // Indices du tableau de 0 à 32
 	   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,  // Indices du tableau de 33 à 58
 	//  A,  B,  C,  D,  E,  F,  G,  H,  I,  J,  K,  L,  M,  N,  O,  P,  Q,  R,  S,  T,  U,  V,  W,  X,  Y,  Z,  // Codes ASCII de 65 à 90
-};
+}; //GG LE TABLEAU HUGO

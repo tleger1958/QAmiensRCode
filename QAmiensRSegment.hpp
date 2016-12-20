@@ -66,11 +66,11 @@ public:
 
 
 	// Mode alphanumérique
-	static QAmiensRSegment makeAlphanumeric(const char *text);
+        static QAmiensRSegment faireAlphanumerique(const char *text);
 
 
 	// Mode Kanji
-	static std::vector<QAmiensRSegment> makeSegments(const char *text);
+	static std::vector<QAmiensRSegment> faireSegments(const char *text);
 
 
 	// Fonctions statiques du helper

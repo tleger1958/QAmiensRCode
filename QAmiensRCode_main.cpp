@@ -15,14 +15,18 @@ CE N'EST PAS UN MOTEUR !
 
 // La boucle principale du programme, exécutée la première.
 int main(int argc, char **argv) {
-
     std::string texteString;
     std::cout << "Entrer le texte à encoder en QAmiensRCode : ";
     std::cin >> texteString;    // On entre le texte qu'on veut convertir
-    /*int correction;
-    std::cout << "Entrez le niveau de correction (1 = bas, 2 = moyen, 3 = moyen_plus, 4 = haut) : ";
-    std::cin >> correction;*/
+    int correction;
+    std::cout << "Entrer le niveau de correction (1 = bas, 2 = moyen, 3 = haut, 4 = extrême) : ";
+    std::cin >> correction;
+
     const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS;
+
+    if(correction==2) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN;
+    if(correction==3) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN_PLUS;
+    if(correction==4) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::HAUT;
 
     const char *texte = texteString.c_str();    // On convertit la chaine de caractère en liste de caractères (et oui c'est important !)
     // Création du QAmiensRCode et copiage des données SVG dans un fichier xml
