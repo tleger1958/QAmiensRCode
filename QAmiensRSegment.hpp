@@ -9,7 +9,7 @@ namespace QAmiensRCodeGeneration {
 /*
  * Représente une chaine de caractères qui doit être codée en QAmiensRCode.
  * Chaque segment a un mode et une séquence de caractères en bits.
- * Ici on a pas de restriction de longueur mais pour es vrais QAmiensRCode (comprenez les QR Code) il y en a.
+ * Ici on a pas de restriction de longueur mais pour des vrais QAmiensRCode (comprenez les QR Code) il y en a.
  * On peut mettre au max 7 089 caractères, et si c'est plus long… tant pis on coupe !
  */
 
@@ -25,7 +25,6 @@ public:
 		static const Mode NUMERIQUE;
 		static const Mode ALPHANUMERIQUE;
 		static const Mode OCTET;
-		static const Mode KANJI;
 
 
 		// Champs
@@ -66,7 +65,7 @@ public:
 
 
 	// Mode alphanumérique
-        static QAmiensRSegment faireAlphanumerique(const char *text);
+    static QAmiensRSegment faireAlphanumerique(const char *text);
 
 
 	// Mode Kanji

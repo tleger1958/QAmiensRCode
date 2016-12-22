@@ -22,7 +22,6 @@ int QAmiensRCodeGeneration::QAmiensRSegment::Mode::indicNbBits(int version) cons
 const QAmiensRCodeGeneration::QAmiensRSegment::Mode QAmiensRCodeGeneration::QAmiensRSegment::Mode::NUMERIQUE        (0x1, 10, 12, 14);
 const QAmiensRCodeGeneration::QAmiensRSegment::Mode QAmiensRCodeGeneration::QAmiensRSegment::Mode::ALPHANUMERIQUE   (0x2,  9, 11, 13);
 const QAmiensRCodeGeneration::QAmiensRSegment::Mode QAmiensRCodeGeneration::QAmiensRSegment::Mode::OCTET            (0x4,  8, 16, 16);
-const QAmiensRCodeGeneration::QAmiensRSegment::Mode QAmiensRCodeGeneration::QAmiensRSegment::Mode::KANJI            (0x8,  8, 10, 12);
 
 
 
@@ -74,7 +73,7 @@ QAmiensRCodeGeneration::QAmiensRSegment QAmiensRCodeGeneration::QAmiensRSegment:
 
 
 std::vector<QAmiensRCodeGeneration::QAmiensRSegment> QAmiensRCodeGeneration::QAmiensRSegment::faireSegments(const char *texte) {
-	// Selectionne le mode d'encodage le plus optimisé
+	// Sélectionne le mode d'encodage le plus optimisé
 	std::vector<QAmiensRSegment> result;
 	if (*texte == '\0');  // Laisse le vector vide
 	else if (QAmiensRSegment::estNumerique(texte)) result.push_back(QAmiensRSegment::faireNumerique(texte));

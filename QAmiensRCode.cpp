@@ -107,7 +107,7 @@ QAmiensRCodeGeneration::QAmiensRCode::QAmiensRCode(const QAmiensRCode &qamiensrc
 	// Vérfication des arguments
 	if (masque < -1 || masque > 7) throw "Valeur du masque en dehors de la plage autorisée";
 
-    // Traite les champs de la grille
+    // Traitee les champs de la grille
 	modules = qamiensrcode.modules;
 	estFonction = qamiensrcode.estFonction;
 
