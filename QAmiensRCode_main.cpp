@@ -22,8 +22,8 @@ int main(int argc, char **argv) {
     std::cout << "Entrer le niveau de correction (1 = bas, 2 = moyen, 3 = haut, 4 = extrême) : ";
     std::cin >> correction;
 
-    const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS;
-
+    //const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = <#initializer#>;
+    if(correction==1) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS
     if(correction==2) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN;
     if(correction==3) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::MOYEN_PLUS;
     if(correction==4) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::HAUT;
