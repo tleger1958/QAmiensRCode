@@ -91,7 +91,8 @@ QAmiensRCodeGeneration::QAmiensRSegment::QAmiensRSegment(const Mode &md, int num
 		mode(md),
 		numChars(numCh),
 		donnee(b),
-		bitLength(bitLen) {
+		bitLength(bitLen)
+{
 	if (numCh < 0 || bitLen < 0 || b.size() != static_cast<unsigned int>((bitLen + 7) / 8)) throw "Valeur invalide";
 }
 
@@ -133,4 +134,4 @@ const int8_t QAmiensRCodeGeneration::QAmiensRSegment::TABLE_ENCODAGE_ALPHANUMERI
 	   36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1, -1,  // Indices du tableau de 0 à 32
 	   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,  // Indices du tableau de 33 à 58
 	//  A,  B,  C,  D,  E,  F,  G,  H,  I,  J,  K,  L,  M,  N,  O,  P,  Q,  R,  S,  T,  U,  V,  W,  X,  Y,  Z,  // Codes ASCII de 65 à 90
-}; //GG LE TABLEAU HUGO
+}; //GG LE TABLEAU TOUT BEAU HUGO

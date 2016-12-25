@@ -23,7 +23,7 @@ private:
 	/*---- Constructeur ----*/
 public:
 
-	// Creates an empty bit buffer (length 0).
+	// Crée un tampon de bits vide (longueur 0).
 	BitTampon();
 
 
