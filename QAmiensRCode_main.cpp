@@ -31,14 +31,17 @@ int main(int argc, char **argv) {
     if(correction==4) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::HAUT;
 
     const char *texte = texteString.c_str();    // On convertit la chaine de caractère en liste de caractères (et oui c'est important !)
+
     // Création du QAmiensRCode et copiage des données SVG dans un fichier xml
     const QAmiensRCodeGeneration::QAmiensRCode qamiensrcode = QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(texte, nivCorrErreur);
+
     std::fstream xml("QAmiensRCode.xml", std::ios::out | std::ios::trunc);
     if (xml) {
         xml << qamiensrcode.encoderSVG(bordure);
         xml.close();
     }
 
+    // Ouverture d'une fenêtre SFML pour afficher le QAmiensRCode
     sf::RenderWindow fen(sf::VideoMode(500, 500), "QAmiensRCode");
 
     sf::Sprite sprite;

@@ -539,14 +539,13 @@ QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolom
 	coefficients.resize(degre);
 	coefficients.at(degre - 1) = 1;
 
-	// Calcule le produit polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degre-1}),
+	// Calcule le geénérateur polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degre-1}),
 	// dépose le plus grand terme et stocke le reste des coefficients dans l'ordre décroissant des puissances.
-	// On note que r = 0x02, ce qui est un générateur d'élément de ce champ GF(2^8/0x11D).
 	int racine = 1;
 	for (int i = 0; i < degre; i++) {
 		// Multiplie le produit actuel par (x - r^i)
 		for (size_t j = 0; j < coefficients.size(); j++) {
-			coefficients.at(j) = multiplierCommeUnCommuniste(coefficients.at(j), static_cast<uint8_t>(racine));
+			coefficients.at(j) = multiplierCommeUnCommuniste(coefficients.at(j), static_cast<uint8_t>(racine)); //static_cast sert à faire une conversion en uint8_t
 			if (j + 1 < coefficients.size()) coefficients.at(j) ^= coefficients.at(j + 1);
 		}
 		racine = (racine << 1) ^ ((racine >> 7) * 0x11D);  // Multiplie par 0x02 mod GF(2^8/0x11D)
