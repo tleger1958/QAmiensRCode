@@ -18,9 +18,11 @@ int main(int argc, char **argv) {
     std::string texteString;
     std::cout << "Entrer le texte à encoder en QAmiensRCode : ";
     std::cin >> texteString;    // On entre le texte qu'on veut convertir
-    int correction;
+    unsigned int correction, bordure;
     std::cout << "Entrer le niveau de correction (1 = bas, 2 = moyen, 3 = haut, 4 = extrême) : ";
     std::cin >> correction;
+    std::cout << "Entrer la taille de la bordure (en pixels) : ";
+    std::cin >> bordure;
 
     const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS;
     if(correction==1) const QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr &nivCorrErreur = QAmiensRCodeGeneration::QAmiensRCode::NivCorrErr::BAS;
@@ -33,16 +35,16 @@ int main(int argc, char **argv) {
     const QAmiensRCodeGeneration::QAmiensRCode qamiensrcode = QAmiensRCodeGeneration::QAmiensRCode::encoderTexte(texte, nivCorrErreur);
     std::fstream xml("QAmiensRCode.xml", std::ios::out | std::ios::trunc);
     if (xml) {
-        xml << qamiensrcode.encoderSVG(4);
+        xml << qamiensrcode.encoderSVG(bordure);
         xml.close();
     }
 
     sf::RenderWindow fen(sf::VideoMode(500, 500), "QAmiensRCode");
 
     sf::Sprite sprite;
-    sf::Texture texture(qamiensrcode.encoderSFML(4));
+    sf::Texture texture(qamiensrcode.encoderSFML(bordure));
     sprite.setTexture(texture);
-    float echelle = qamiensrcode.getEchelle(4);
+    float echelle = qamiensrcode.getEchelle(bordure);
     sprite.setScale(echelle, echelle);
 
     while (fen.isOpen()) {

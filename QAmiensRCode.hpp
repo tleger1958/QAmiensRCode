@@ -12,8 +12,8 @@ namespace QAmiensRCodeGeneration {
 
 
 /*
- * Représente une grille carrée immuable de cellules noires et blanches pour un symbole de QAmiensRCode, et
- * fournit des fonctions statiques pour créer un QAmiensRCode à partir de données textuelles ou binaires fournies par l'utilisateur.
+ * Représente une grille carrée de cellules noires et blanches pour un symbole de QAmiensRCode, et
+ * fournit des fonctions statiques pour créer un QAmiensRCode à partir de données fournies par l'utilisateur.
  * Cette classe couvre la spécification du modèle 2 de QAmiensRCode, prenant en charge toutes les versions (les tailles)
  * de 1 à 40, les 4 niveaux de correction d'erreur, mais seulement 3 modes d'encodage de caractères.
  */
@@ -81,13 +81,19 @@ public:
 	// Paramètres scalaires publics immuables
 public:
 
-	// Version comprise entre 1 et 40
+	/*
+	 * Version comprise entre 1 et 40
+     */
 	const int version;
 
-	// La hauteur et la largeur se mesurent en modules. C'est toujours égal à la version × 4 + 17, donc ça va de 21 à 177.
+	/*
+	 * La hauteur et la largeur se mesurent en modules. C'est toujours égal à la version × 4 + 17, donc ça va de 21 à 177.
+	 */
 	const int taille;
 
-	// Niveau de correction utilisé
+	/*
+	 * Niveau de correction utilisé
+	 */
 	const NivCorrErr &niveauCorrectionErreur;
 
     /* Modèle de masque utilisé dans ce QAmiensRCode, compris entre 0 et 7 (càd un entier de 3 bits non signé).
