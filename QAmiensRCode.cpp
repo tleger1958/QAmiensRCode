@@ -142,7 +142,7 @@ std::string QAmiensRCodeGeneration::QAmiensRCode::encoderSVG(int bordure) const 
 	* 'height', la hauteur du document (en pixels) à l'ouverture.
 	* On crée donc ici un viewport de 500×500 unités, ce qui fait que chaque unité de l'élément SVG correspondra
 	* à une unité du viewport. On aura donc un élément SVG dont le système de coordonnée ira de 0 à 500 en largeur
-	* et de 0 à 200 en hauteur.
+	* et de 0 à 500 en hauteur.
 	* En ajoutant une notion de 'viewbox', on transforme le système de coordonnées afin qu'il aille de 0 à w à
 	* l'horizontale et de 0 à h à la verticale.
 	*/
@@ -207,9 +207,9 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifsFonction() {
 	}
 
 	// Dessinez 3 modèles de recherche (tous les coins sauf en bas à droite ; écrase certains modules de synchronisation)
-	dessinerMotifViseur(3, 3);
-	dessinerMotifViseur(taille - 4, 3);
-	dessinerMotifViseur(3, taille - 4);
+    dessinerMotifRecherche(3, 3);
+	dessinerMotifRecherche(taille - 4, 3);
+	dessinerMotifRecherche(3, taille - 4);
 
 	// Dessine les nombreux motifs d'alignement
 	const std::vector<int> posAlignementPattern(getPosMotifAlignement(version));
@@ -270,7 +270,7 @@ void QAmiensRCodeGeneration::QAmiensRCode::dessinerVersion() {
 }
 
 
-void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifViseur(int x, int y) {
+void QAmiensRCodeGeneration::QAmiensRCode::dessinerMotifRecherche(int x, int y) {
 	for (int i = -4; i <= 4; i++) {
 		for (int j = -4; j <= 4; j++) {
 			int dist = std::max(std::abs(i), std::abs(j));  // norme infinie
@@ -539,13 +539,14 @@ QAmiensRCodeGeneration::QAmiensRCode::GenerateurReedSolomon::GenerateurReedSolom
 	coefficients.resize(degre);
 	coefficients.at(degre - 1) = 1;
 
-	// Calcule le geénérateur polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degre-1}),
+	// Calcule le produit polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degre-1}),
 	// dépose le plus grand terme et stocke le reste des coefficients dans l'ordre décroissant des puissances.
+	// On note que r = 0x02, ce qui est un générateur d'élément de ce champ GF(2^8/0x11D).
 	int racine = 1;
 	for (int i = 0; i < degre; i++) {
 		// Multiplie le produit actuel par (x - r^i)
 		for (size_t j = 0; j < coefficients.size(); j++) {
-			coefficients.at(j) = multiplierCommeUnCommuniste(coefficients.at(j), static_cast<uint8_t>(racine)); //static_cast sert à faire une conversion en uint8_t
+			coefficients.at(j) = multiplierCommeUnCommuniste(coefficients.at(j), static_cast<uint8_t>(racine));
 			if (j + 1 < coefficients.size()) coefficients.at(j) ^= coefficients.at(j + 1);
 		}
 		racine = (racine << 1) ^ ((racine >> 7) * 0x11D);  // Multiplie par 0x02 mod GF(2^8/0x11D)

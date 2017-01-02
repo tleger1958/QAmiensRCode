@@ -12,8 +12,8 @@ namespace QAmiensRCodeGeneration {
 
 
 /*
- * Représente une grille carrée de cellules noires et blanches pour un symbole de QAmiensRCode, et
- * fournit des fonctions statiques pour créer un QAmiensRCode à partir de données fournies par l'utilisateur.
+ * Représente une grille carrée immuable de cellules noires et blanches pour un symbole de QAmiensRCode, et
+ * fournit des fonctions statiques pour créer un QAmiensRCode à partir de données textuelles ou binaires fournies par l'utilisateur.
  * Cette classe couvre la spécification du modèle 2 de QAmiensRCode, prenant en charge toutes les versions (les tailles)
  * de 1 à 40, les 4 niveaux de correction d'erreur, mais seulement 3 modes d'encodage de caractères.
  */
@@ -49,7 +49,7 @@ public:
 	 * En tant que limite supérieure conservatrice, cette fonction est garantie de réussite pour les chaînes qui ont 738 ou
 	 * moins de points de code Unicode (ça n'est pas unités de code UTF-16). La version de QAmiensRCode la plus petite
 	 * possible est automatiquement choisie pour la sortie.
-	 * Le niveau de correction d'erreurs du résultat peut être supérieur à celui choisit si cela peut être fait
+	 * Le niveau de correction d'erreurs du résultat peut être supérieur à l'argument 'nivCorrErreur' si cela peut être fait
 	 * sans augmenter la version.
 	 */
 	static QAmiensRCode encoderTexte(const char *texte, const NivCorrErr &nivCorrErreur);
@@ -59,7 +59,7 @@ public:
      * Renvoie un QAmiensRCode qui représente la chaîne de données binaires donnée, au niveau de correction d'erreur donné.
      * Cette fonction encode toujours en utilisant le mode de segment binaire, pas n'importe quel mode texte. Le nombre maximal
      * d'octets autorisés est 2953. La version de code qamiensrcode la plus petite possible est automatiquement choisie pour la sortie.
-     * Le niveau NivCorrErr du résultat peut être supérieur à celui choisi si cela peut être fait sans augmenter la version.
+     * Le niveau NivCorrErr du résultat peut être supérieur à l'argument nivCorrErreur si cela peut être fait sans augmenter la version.
 	 */
 	static QAmiensRCode encoderOctet(const std::vector<uint8_t> &donnee, const NivCorrErr &nivCorrErreur);
 
@@ -81,19 +81,13 @@ public:
 	// Paramètres scalaires publics immuables
 public:
 
-	/*
-	 * Version comprise entre 1 et 40
-     */
+	// Version comprise entre 1 et 40
 	const int version;
 
-	/*
-	 * La hauteur et la largeur se mesurent en modules. C'est toujours égal à la version × 4 + 17, donc ça va de 21 à 177.
-	 */
+	// La hauteur et la largeur se mesurent en modules. C'est toujours égal à la version × 4 + 17, donc ça va de 21 à 177.
 	const int taille;
 
-	/*
-	 * Niveau de correction utilisé
-	 */
+	// Niveau de correction utilisé
 	const NivCorrErr &niveauCorrectionErreur;
 
     /* Modèle de masque utilisé dans ce QAmiensRCode, compris entre 0 et 7 (càd un entier de 3 bits non signé).
@@ -176,7 +170,7 @@ private:
 
 
 	// Dessine un motif de viseur de format 9*9, avec le séparateur de bordure compris, avec le module central en (x, y).
-	void dessinerMotifViseur(int x, int y);
+	void dessinerMotifRecherche(int x, int y);
 
 
 	// Dessine un motif d'alignement de format 5*5, avec le module central en (x, y).
@@ -208,12 +202,16 @@ private:
 	void appliquerMasque(int masque);
 
 
+	// A messy helper function for the constructors. This qamiensrcode Code must be in an unmasked state when this
+	// method is called. The given argument is the requested mask, which is -1 for auto or 0 to 7 for fixed.
+	// This method applies and returns the actual mask chosen, from 0 to 7.
+
 	// C'est une fonction d'aide désordonnée pour les constructeurs. Le QAmiensRCode doit être non masqué lorsqu'on appelle cette méthode.
 	// L'argument donné c'est le masque demandé, c'est -1 pour auto ou entre 0 et 7 pour fixe. Cette méthode s'applique et renvoie le masque réel choisi, de 0 à 7.
 	int gererMasquageConstructeur(int masque);
 
 
-	// Calcule et retourne le score de pénalité en fonction des modules actuels du QAmiensRCode.
+	// Calcule et retourne le score de pénalité en fonction de l'état des modules actuels du QAmiensRCode.
 	// C'est utilisé par l'algorithme de choix de masque automatique pour trouver le motif de masque qui donne le score le plus bas.
 	int getScorePenalite() const;
 
@@ -259,15 +257,15 @@ private:
 
 	/*
 	 * Calcule les mots de code de correction d'erreur Reed-Solomon pour une séquence de
-	 * mots de code de données à un degré donné.
-	 * Cette classe peut exister parce que le polynôme du diviseur n'a pas besoin d'être recalculé pour chaque entrée.
+	 * mots de code de données à un degré donné. Les objets sont immuables, et l'état ne dépend
+	 * que du degré. Cette classe existe parce que le polynôme du diviseur n'a pas besoin d'être recalculé pour chaque entrée.
 	 */
 	class GenerateurReedSolomon final {
 
 		/*-- Champ immuable --*/
 	private:
 
-		// Coefficients du polynôme du diviseur, mémorisé de la puissance la plus élevée à la plus basse, sauf le premier terme qui est toujours 1.
+		// Coefficients du polynôme du diviseur, mémorisé de la puissance la plus élevée à la plus basse, à l'exclusion du premier terme qui est toujours 1.
 		// Par exemple, le polynôme x ^ 3 + 255x ^ 2 + 8x + 93 est stocké sous la forme uint8 {255, 8, 93} .
 		std::vector<uint8_t> coefficients;
 
@@ -276,7 +274,7 @@ private:
 	public:
 
 		/*
-		 * Crée un générateur de NivCorrErr Reed-Solomon pour le degré donné.
+		 * Crée un générateur d'NivCorrErr Reed-Solomon pour le degré donné.
 		 * Cela pourrait être implémenté comme une table de
 		 * consultation sur toutes les valeurs de paramètres possibles, au lieu d'être un algorithme.
 		 */
@@ -287,7 +285,7 @@ private:
 	public:
 
 		/*
-		 * Calcule et renvoie le NivCorrErr Reed-Solomon pour la séquence de données... donnée !
+		 * Calcule et renvoie l'NivCorrErr Reed-Solomon pour la séquence de données... donnée !
 		 * L'objet retourné est toujours un nouveau tableau d'octets. Cette méthode ne change pas l'état de l'objet.
 		 */
 		std::vector<uint8_t> getReste(const std::vector<uint8_t> &donnees) const;
